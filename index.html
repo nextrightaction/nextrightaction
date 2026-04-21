@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Next Right Action</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700;800&family=DM+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #050508; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useState } = React;
+
+    const DATA = [
+      { id:1,  label:"Inner Life",    sub:"Spirituality & Purpose",  emoji:"✨", color:"#b896f0", score:7  },
+      { id:2,  label:"Mental Health", sub:"Emotional Wellbeing",      emoji:"🧠", color:"#67d9f0", score:5  },
+      { id:3,  label:"Community",     sub:"Service & Citizenship",    emoji:"🌍", color:"#4ade9a", score:6  },
+      { id:4,  label:"Body",          sub:"Health & Fitness",         emoji:"💪", color:"#f87171", score:4  },
+      { id:5,  label:"Relationships", sub:"Friends & Family",         emoji:"❤️", color:"#fb923c", score:8  },
+      { id:6,  label:"Environment",   sub:"Home & Workplace",         emoji:"🏡", color:"#fbbf24", score:6  },
+      { id:7,  label:"Play",          sub:"Recreation & Fun",         emoji:"🎉", color:"#38bdf8", score:3  },
+      { id:8,  label:"Money",         sub:"Financial Security",       emoji:"💰", color:"#a3e635", score:6  },
+      { id:9,  label:"Vocation",      sub:"Career & Education",       emoji:"🚀", color:"#818cf8", score:7  },
+      { id:10, label:"Intimacy",      sub:"Romantic Relationship",    emoji:"🌹", color:"#f472b6", score:4  },
+      { id:11, label:"Time Wealth",   sub:"Who Owns Your Hours?",     emoji:"⏳", color:"#f9a825", score:5  },
+      { id:12, label:"Repair",        sub:"Reconciliation & Integrity",emoji:"🤝", color:"#80cbc4", score:4  },
+    ];
+
+    const ACTIONS = {
+      1:  "Sit in silence 10 minutes today. No agenda. Just breathe.",
+      2:  "Name what you're actually feeling right now. Be specific.",
+      3:  "Volunteer 2 hours this month. Put it in your calendar now.",
+      4:  "Schedule the checkup you've been avoiding. Open your calendar.",
+      5:  "Call someone you love. Not text. Call.",
+      6:  "Remove one thing from your space that no longer belongs.",
+      7:  "Do one thing purely for joy today. No productivity justification.",
+      8:  "Write your actual net worth number down. Just the number.",
+      9:  "Spend 30 minutes today on the skill that changes your trajectory.",
+      10: "Have one honest conversation you've been avoiding.",
+      11: "Count the hours you controlled yesterday. Write the number down.",
+      12: "Name one person you owe something. Just name them. That's enough.",
+    };
+
+    const avg = (DATA.reduce((a,b) => a+b.score,0) / DATA.length).toFixed(1);
+    const n = DATA.length;
+    const angle = i => (i * 2 * Math.PI) / n - Math.PI / 2;
+    const pt = (i, r, cx=150, cy=150) => ({
+      x: cx + r * Math.cos(angle(i)),
+      y: cy + r * Math.sin(angle(i))
+    });
+
+    function Radar({ active, onSelect }) {
+      const maxR = 108;
+      const path = DATA.map((d,i) => {
+        const p = pt(i, (d.score/10)*maxR);
+        return `${i===0?"M":"L"}${p.x.toFixed(1)},${p.y.toFixed(1)}`;
+      }).join(" ") + "Z";
+
+      return (
+        <svg viewBox="0 0 300 300" style={{width:"100%",maxWidth:320,display:"block",margin:"0 auto"}}>
+          <defs>
+            <radialGradient id="rfill" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stopColor="rgba(168,139,250,0.2)"/>
+              <stop offset="100%" stopColor="rgba(168,139,250,0.02)"/>
+            </radialGradient>
+          </defs>
+          {[2,4,6,8,10].map(lv=>(
+            <polygon key={lv}
+              points={DATA.map((_,i)=>{const p=pt(i,(lv/10)*maxR);return`${p.x},${p.y}`;}).join(" ")}
+              fill={lv===10?"url(#rfill)":"none"}
+              stroke="rgba(255,255,255,0.06)" strokeWidth="0.8"/>
+          ))}
+          {DATA.map((_,i)=>{
+            const o=pt(i,maxR);
+            return <line key={i} x1={150} y1={150} x2={o.x} y2={o.y} stroke="rgba(255,255,255,0.06)" strokeWidth="0.8"/>;
+          })}
+          <path d={path} fill="url(#rfill)" stroke="rgba(168,139,250,0.55)" strokeWidth="1.5"/>
+          {DATA.map((d,i)=>{
+            const r=(d.score/10)*maxR;
+            const p=pt(i,r);
+            const lp=pt(i,maxR+26);
+            const isActive=active===d.id;
+            return (
+              <g key={d.id} onClick={()=>onSelect(d.id===active?null:d.id)} style={{cursor:"pointer"}}>
+                <circle cx={p.x} cy={p.y} r={isActive?7:4.5}
+                  fill={isActive?d.color:"rgba(255,255,255,0.75)"}
+                  stroke={isActive?"rgba(0,0,0,0.3)":"none"} strokeWidth="1.5"
+                  style={{filter:isActive?`drop-shadow(0 0 5px ${d.color})`:"none"}}/>
+                <text x={lp.x} y={lp.y} textAnchor="middle" dominantBaseline="middle"
+                  fontSize={isActive?13:10} fill={isActive?d.color:"rgba(255,255,255,0.4)"}
+                  style={{userSelect:"none"}}>{d.emoji}</text>
+                <text x={p.x} y={p.y-9} textAnchor="middle" fontSize="7"
+                  fill={isActive?d.color:"rgba(255,255,255,0.2)"}>{d.score}</text>
+              </g>
+            );
+          })}
+          <text x={150} y={142} textAnchor="middle" fontSize="22" fontWeight="800"
+            fill="rgba(255,255,255,0.85)" fontFamily="'Cormorant Garamond',serif">{avg}</text>
+          <text x={150} y={160} textAnchor="middle" fontSize="7" letterSpacing="1.5"
+            fill="rgba(255,255,255,0.25)">LIFE SCORE</text>
+        </svg>
+      );
+    }
+
+    function Table({ active, onSelect }) {
+      const sorted = [...DATA].sort((a,b)=>a.score-b.score);
+      return (
+        <div style={{display:"flex",flexDirection:"column",gap:"2px"}}>
+          <div style={{display:"grid",gridTemplateColumns:"2fr 1fr 50px",
+            padding:"0 0.5rem 0.6rem",borderBottom:"1px solid rgba(255,255,255,0.06)",marginBottom:"0.3rem"}}>
+            {["Dimension","","Score"].map((h,i)=>(
+              <div key={i} style={{fontSize:"0.52rem",letterSpacing:"0.12em",textTransform:"uppercase",
+                color:"rgba(255,255,255,0.2)",textAlign:i===2?"right":"left"}}>{h}</div>
+            ))}
+          </div>
+          {sorted.map(d=>{
+            const isActive=active===d.id;
+            return (
+              <div key={d.id} onClick={()=>onSelect(d.id===active?null:d.id)}
+                style={{display:"grid",gridTemplateColumns:"2fr 1fr 50px",alignItems:"center",
+                  gap:"0.5rem",padding:"0.6rem 0.5rem",borderRadius:"8px",cursor:"pointer",
+                  background:isActive?`${d.color}0f`:"transparent",
+                  border:isActive?`1px solid ${d.color}28`:"1px solid transparent",
+                  transition:"all 0.15s"}}>
+                <div style={{display:"flex",alignItems:"center",gap:"0.5rem"}}>
+                  <span style={{fontSize:"1rem"}}>{d.emoji}</span>
+                  <div style={{fontSize:"0.7rem",fontWeight:"600",
+                    color:isActive?d.color:"rgba(255,255,255,0.7)"}}>{d.label}</div>
+                </div>
+                <div style={{height:4,background:"rgba(255,255,255,0.07)",borderRadius:2}}>
+                  <div style={{height:"100%",width:`${d.score*10}%`,borderRadius:2,
+                    background:`linear-gradient(90deg,${d.color}88,${d.color})`,transition:"width 0.4s"}}/>
+                </div>
+                <div style={{textAlign:"right",fontSize:"0.85rem",fontWeight:"800",
+                  color:isActive?d.color:"rgba(255,255,255,0.6)",fontFamily:"'Cormorant Garamond',serif"}}>
+                  {d.score}<span style={{fontSize:"0.45rem",color:"rgba(255,255,255,0.2)",fontFamily:"sans-serif"}}>/10</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      );
+    }
+
+    function App() {
+      const [view, setView] = useState("wheel");
+      const [active, setActive] = useState(null);
+      const activeDim = DATA.find(d=>d.id===active);
+
+      return (
+        <div style={{minHeight:"100vh",
+          background:"radial-gradient(ellipse at 20% 10%,#16082e 0%,#0c0c1a 45%,#050508 100%)",
+          fontFamily:"'DM Sans',sans-serif",color:"rgba(255,255,255,0.85)",
+          display:"flex",flexDirection:"column",alignItems:"center"}}>
+
+          <div style={{width:"100%",maxWidth:400,padding:"2rem 1.25rem 4rem"}}>
+
+            {/* Header */}
+            <div style={{marginBottom:"1.6rem",display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+              <div>
+                <h1 style={{fontFamily:"'Cormorant Garamond',serif",fontSize:"1.6rem",fontWeight:"800",
+                  background:"linear-gradient(135deg,#e2d9f3,#a78bfa)",
+                  WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",
+                  letterSpacing:"-0.02em",lineHeight:1.1,marginBottom:"0.2rem"}}>
+                  Next Right Action
+                </h1>
+                <p style={{fontSize:"0.55rem",color:"rgba(255,255,255,0.2)",letterSpacing:"0.15em",textTransform:"uppercase"}}>
+                  Life Inventory & Action
+                </p>
+              </div>
+              {/* Toggle */}
+              <div style={{display:"inline-flex",background:"rgba(255,255,255,0.04)",
+                borderRadius:"10px",padding:"3px",border:"1px solid rgba(255,255,255,0.07)"}}>
+                {[["wheel","◎"],["table","≡"]].map(([v,label])=>(
+                  <button key={v} onClick={()=>setView(v)} style={{
+                    padding:"0.4rem 0.8rem",borderRadius:"7px",fontSize:"0.8rem",
+                    fontWeight:"600",cursor:"pointer",border:"none",transition:"all 0.2s",
+                    background:view===v?"rgba(167,139,250,0.2)":"transparent",
+                    color:view===v?"#c4b5fd":"rgba(255,255,255,0.25)"}}>
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Score summary */}
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",
+              padding:"0.8rem 1.2rem",marginBottom:"1.2rem",
+              background:"rgba(255,255,255,0.03)",borderRadius:"12px",
+              border:"1px solid rgba(255,255,255,0.06)"}}>
+              <div>
+                <div style={{fontSize:"2.2rem",fontWeight:"900",fontFamily:"'Cormorant Garamond',serif",
+                  background:"linear-gradient(135deg,#e879f9,#818cf8)",
+                  WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",lineHeight:1}}>{avg}</div>
+                <div style={{fontSize:"0.5rem",color:"rgba(255,255,255,0.2)",letterSpacing:"0.1em",textTransform:"uppercase"}}>
+                  Overall Score
+                </div>
+              </div>
+              <div style={{textAlign:"right",fontSize:"0.6rem",color:"rgba(255,255,255,0.3)",fontStyle:"italic",maxWidth:"160px"}}>
+                "What is your next right action?"
+              </div>
+            </div>
+
+            {/* Main view */}
+            <div style={{background:"rgba(255,255,255,0.025)",borderRadius:"18px",
+              border:"1px solid rgba(255,255,255,0.07)",padding:"1.5rem 1rem",backdropFilter:"blur(12px)"}}>
+              {view==="wheel"
+                ? <Radar active={active} onSelect={setActive}/>
+                : <Table active={active} onSelect={setActive}/>}
+            </div>
+
+            {/* Next right action panel */}
+            {activeDim && (
+              <div style={{marginTop:"0.8rem",padding:"1rem 1.1rem",
+                background:`linear-gradient(135deg,${activeDim.color}0c,rgba(10,10,20,0.95))`,
+                borderRadius:"12px",border:`1px solid ${activeDim.color}28`}}>
+                <div style={{fontSize:"0.55rem",color:"rgba(255,255,255,0.25)",
+                  letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:"0.5rem"}}>
+                  Next Right Action
+                </div>
+                <div style={{fontSize:"0.85rem",fontWeight:"600",
+                  color:"rgba(255,255,255,0.85)",lineHeight:"1.6"}}>
+                  {ACTIONS[activeDim.id]}
+                </div>
+                <div style={{marginTop:"0.6rem",fontSize:"0.6rem",color:activeDim.color}}>
+                  {activeDim.emoji} {activeDim.label} — {activeDim.sub}
+                </div>
+              </div>
+            )}
+
+            {/* Footer */}
+            <div style={{marginTop:"2rem",textAlign:"center",
+              fontSize:"0.58rem",color:"rgba(255,255,255,0.15)",lineHeight:"1.8",fontStyle:"italic"}}>
+              "You don't have to believe in God<br/>to surrender to reality."
+              <br/><br/>
+              Built on honesty. Inventory. Action.
+            </div>
+
+          </div>
+        </div>
+      );
+    }
+
+    ReactDOM.render(<App/>, document.getElementById("root"));
+  </script>
+</body>
+</html>
