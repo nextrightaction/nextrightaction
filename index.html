@@ -1,17 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Next Right Action</title>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="theme-color" content="#080810"/>
+  <title>Honor Your Life</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800;900&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700;800&family=DM+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { background: #050508; }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{background:#080810;font-family:'DM Sans',sans-serif;color:white;}
+    button{font-family:inherit;}
+    @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+    @keyframes slideUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
   </style>
 </head>
 <body>
@@ -19,229 +23,246 @@
   <script type="text/babel">
     const { useState } = React;
 
-    const DATA = [
-      { id:1,  label:"Inner Life",    sub:"Spirituality & Purpose",  emoji:"✨", color:"#b896f0", score:7  },
-      { id:2,  label:"Mental Health", sub:"Emotional Wellbeing",      emoji:"🧠", color:"#67d9f0", score:5  },
-      { id:3,  label:"Community",     sub:"Service & Citizenship",    emoji:"🌍", color:"#4ade9a", score:6  },
-      { id:4,  label:"Body",          sub:"Health & Fitness",         emoji:"💪", color:"#f87171", score:4  },
-      { id:5,  label:"Relationships", sub:"Friends & Family",         emoji:"❤️", color:"#fb923c", score:8  },
-      { id:6,  label:"Environment",   sub:"Home & Workplace",         emoji:"🏡", color:"#fbbf24", score:6  },
-      { id:7,  label:"Play",          sub:"Recreation & Fun",         emoji:"🎉", color:"#38bdf8", score:3  },
-      { id:8,  label:"Money",         sub:"Financial Security",       emoji:"💰", color:"#a3e635", score:6  },
-      { id:9,  label:"Vocation",      sub:"Career & Education",       emoji:"🚀", color:"#818cf8", score:7  },
-      { id:10, label:"Intimacy",      sub:"Romantic Relationship",    emoji:"🌹", color:"#f472b6", score:4  },
-      { id:11, label:"Time Wealth",   sub:"Who Owns Your Hours?",     emoji:"⏳", color:"#f9a825", score:5  },
-      { id:12, label:"Repair",        sub:"Reconciliation & Integrity",emoji:"🤝", color:"#80cbc4", score:4  },
+    const MISSION = "I create a world of love and abundance, by being confident, taking risks, and never giving up.";
+
+    const DIMS = [
+      { id:1,  label:"Inner Life",    sub:"Spirituality",        emoji:"✨", color:"#6D3FC8" },
+      { id:2,  label:"Mental Health", sub:"Wellbeing",           emoji:"🧠", color:"#0C7EA0" },
+      { id:3,  label:"Community",     sub:"Service",             emoji:"🌍", color:"#0A6B4A" },
+      { id:4,  label:"Body",          sub:"Health & Fitness",    emoji:"💪", color:"#A01830" },
+      { id:5,  label:"Relationships", sub:"Friends & Family",    emoji:"❤️", color:"#B45309" },
+      { id:6,  label:"Environment",   sub:"Home & Work",         emoji:"🏡", color:"#1D4ED8" },
+      { id:7,  label:"Play",          sub:"Fun & Rest",          emoji:"🎉", color:"#0D7A6E" },
+      { id:8,  label:"Money",         sub:"Financial",           emoji:"💰", color:"#3D6B0A" },
+      { id:9,  label:"Vocation",      sub:"Career & Learning",   emoji:"🚀", color:"#3730A3" },
+      { id:10, label:"Intimacy",      sub:"Relationship",        emoji:"🌹", color:"#9D174D" },
+      { id:11, label:"Time Wealth",   sub:"Who Owns Your Hours", emoji:"⏳", color:"#92400E" },
+      { id:12, label:"Repair",        sub:"Reconciliation",      emoji:"🤝", color:"#134E4A" },
     ];
 
-    const ACTIONS = {
-      1:  "Sit in silence 10 minutes today. No agenda. Just breathe.",
-      2:  "Name what you're actually feeling right now. Be specific.",
-      3:  "Volunteer 2 hours this month. Put it in your calendar now.",
-      4:  "Schedule the checkup you've been avoiding. Open your calendar.",
-      5:  "Call someone you love. Not text. Call.",
-      6:  "Remove one thing from your space that no longer belongs.",
-      7:  "Do one thing purely for joy today. No productivity justification.",
-      8:  "Write your actual net worth number down. Just the number.",
-      9:  "Spend 30 minutes today on the skill that changes your trajectory.",
-      10: "Have one honest conversation you've been avoiding.",
-      11: "Count the hours you controlled yesterday. Write the number down.",
-      12: "Name one person you owe something. Just name them. That's enough.",
-    };
+    function ScorePicker({ score, onChange, color, onClose }) {
+      return (
+        <div onClick={e => e.stopPropagation()} style={{
+          position:"absolute", bottom:"calc(100% + 8px)", left:"50%",
+          transform:"translateX(-50%)",
+          background:"#1A1A2E", border:`1.5px solid ${color}`,
+          borderRadius:14, padding:"0.6rem 0.7rem",
+          zIndex:200, boxShadow:"0 8px 32px rgba(0,0,0,0.7)", width:200,
+        }}>
+          <div style={{fontSize:"0.5rem",color:"rgba(255,255,255,0.4)",letterSpacing:"0.12em",textTransform:"uppercase",textAlign:"center",marginBottom:"0.5rem"}}>
+            Tap to score
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:5}}>
+            {[1,2,3,4,5,6,7,8,9,10].map(n => (
+              <button key={n} onClick={() => { onChange(n); onClose(); }} style={{
+                height:32, borderRadius:8,
+                background: n === score ? color : "rgba(255,255,255,0.07)",
+                border: n === score ? "none" : "1px solid rgba(255,255,255,0.12)",
+                color: n === score ? "white" : "rgba(255,255,255,0.55)",
+                fontWeight: n === score ? "800" : "500",
+                fontSize:"0.78rem", cursor:"pointer",
+                fontFamily:"'Playfair Display', serif", transition:"all 0.12s"
+              }}>{n}</button>
+            ))}
+          </div>
+        </div>
+      );
+    }
 
-    const avg = (DATA.reduce((a,b) => a+b.score,0) / DATA.length).toFixed(1);
-    const n = DATA.length;
-    const angle = i => (i * 2 * Math.PI) / n - Math.PI / 2;
-    const pt = (i, r, cx=150, cy=150) => ({
-      x: cx + r * Math.cos(angle(i)),
-      y: cy + r * Math.sin(angle(i))
-    });
+    function DimCard({ dim, score, onScore }) {
+      const [open, setOpen] = useState(false);
+      const hasScore = score > 0;
+      const H = 110;
+      return (
+        <div style={{position:"relative"}}>
+          <div style={{
+            borderRadius:18,
+            background:`linear-gradient(150deg,${dim.color}f0 0%,${dim.color}b0 100%)`,
+            height:H, padding:"0.75rem 0.8rem",
+            boxShadow:`0 4px 20px ${dim.color}44`,
+            position:"relative", overflow:"hidden",
+            display:"flex", flexDirection:"column", justifyContent:"space-between"
+          }}>
+            <div style={{position:"absolute",top:0,left:0,right:0,height:"45%",background:"rgba(255,255,255,0.09)",borderRadius:"18px 18px 50% 50%",pointerEvents:"none"}}/>
+            <div style={{display:"flex",alignItems:"flex-start",position:"relative",zIndex:1}}>
+              <div style={{flex:1,paddingRight:"0.4rem"}}>
+                <div style={{fontSize:"1.1rem",lineHeight:1,marginBottom:"0.2rem"}}>{dim.emoji}</div>
+                <div style={{fontSize:"0.75rem",fontWeight:"700",color:"white",letterSpacing:"-0.01em",lineHeight:1.15}}>{dim.label}</div>
+                <div style={{fontSize:"0.55rem",color:"rgba(255,255,255,0.6)",marginTop:"1px"}}>{dim.sub}</div>
+              </div>
+              <div style={{width:"42%",display:"flex",alignItems:"center",justifyContent:"center"}}>
+                {hasScore
+                  ? <div style={{fontFamily:"'Playfair Display',serif",fontSize:`${H*0.58}px`,fontWeight:"900",color:"rgba(255,255,255,0.92)",lineHeight:1,letterSpacing:"-0.04em",textShadow:"0 2px 12px rgba(0,0,0,0.3)"}}>{score}</div>
+                  : <div style={{fontFamily:"'Playfair Display',serif",fontSize:`${H*0.22}px`,fontWeight:"700",color:"rgba(255,255,255,0.25)",lineHeight:1}}>–</div>
+                }
+              </div>
+            </div>
+            <div style={{position:"relative",zIndex:1}}>
+              <div style={{height:2.5,background:"rgba(255,255,255,0.18)",borderRadius:2}}>
+                <div style={{height:"100%",width:hasScore?`${score*10}%`:"0%",background:"rgba(255,255,255,0.7)",borderRadius:2,transition:"width 0.35s ease"}}/>
+              </div>
+            </div>
+            <button onClick={e=>{e.stopPropagation();setOpen(o=>!o);}} style={{
+              position:"absolute",top:8,right:8,padding:"2px 7px",borderRadius:20,
+              background:hasScore?"rgba(34,197,94,0.25)":"rgba(239,68,68,0.25)",
+              border:hasScore?"1px solid rgba(34,197,94,0.5)":"1px solid rgba(239,68,68,0.5)",
+              color:hasScore?"#4ADE80":"#FCA5A5",
+              fontSize:"0.48rem",fontWeight:"800",letterSpacing:"0.06em",textTransform:"uppercase",
+              cursor:"pointer",zIndex:2,display:"flex",alignItems:"center",gap:"3px"
+            }}>
+              {hasScore
+                ? <><span style={{fontSize:"0.65rem"}}>✓</span><span>Scored</span></>
+                : <><span style={{fontSize:"0.55rem"}}>+</span><span>Score</span></>}
+            </button>
+          </div>
+          {open && <ScorePicker score={score} onChange={onScore} color={dim.color} onClose={()=>setOpen(false)}/>}
+        </div>
+      );
+    }
 
-    function Radar({ active, onSelect }) {
-      const maxR = 108;
-      const path = DATA.map((d,i) => {
-        const p = pt(i, (d.score/10)*maxR);
+    function WheelView({ scores, onScore }) {
+      const [active, setActive] = useState(null);
+      const n = DIMS.length, cx = 150, cy = 150, maxR = 108;
+      const angle = i => (i * 2 * Math.PI) / n - Math.PI / 2;
+      const pt = (i, r) => ({ x: cx + r * Math.cos(angle(i)), y: cy + r * Math.sin(angle(i)) });
+      const path = DIMS.map((d,i) => {
+        const r = ((scores[d.id]||0)/10)*maxR;
+        const p = pt(i, Math.max(r,2));
         return `${i===0?"M":"L"}${p.x.toFixed(1)},${p.y.toFixed(1)}`;
       }).join(" ") + "Z";
 
       return (
-        <svg viewBox="0 0 300 300" style={{width:"100%",maxWidth:320,display:"block",margin:"0 auto"}}>
-          <defs>
-            <radialGradient id="rfill" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stopColor="rgba(168,139,250,0.2)"/>
-              <stop offset="100%" stopColor="rgba(168,139,250,0.02)"/>
-            </radialGradient>
-          </defs>
-          {[2,4,6,8,10].map(lv=>(
-            <polygon key={lv}
-              points={DATA.map((_,i)=>{const p=pt(i,(lv/10)*maxR);return`${p.x},${p.y}`;}).join(" ")}
-              fill={lv===10?"url(#rfill)":"none"}
-              stroke="rgba(255,255,255,0.06)" strokeWidth="0.8"/>
-          ))}
-          {DATA.map((_,i)=>{
-            const o=pt(i,maxR);
-            return <line key={i} x1={150} y1={150} x2={o.x} y2={o.y} stroke="rgba(255,255,255,0.06)" strokeWidth="0.8"/>;
-          })}
-          <path d={path} fill="url(#rfill)" stroke="rgba(168,139,250,0.55)" strokeWidth="1.5"/>
-          {DATA.map((d,i)=>{
-            const r=(d.score/10)*maxR;
-            const p=pt(i,r);
-            const lp=pt(i,maxR+26);
-            const isActive=active===d.id;
-            return (
-              <g key={d.id} onClick={()=>onSelect(d.id===active?null:d.id)} style={{cursor:"pointer"}}>
-                <circle cx={p.x} cy={p.y} r={isActive?7:4.5}
-                  fill={isActive?d.color:"rgba(255,255,255,0.75)"}
-                  stroke={isActive?"rgba(0,0,0,0.3)":"none"} strokeWidth="1.5"
-                  style={{filter:isActive?`drop-shadow(0 0 5px ${d.color})`:"none"}}/>
-                <text x={lp.x} y={lp.y} textAnchor="middle" dominantBaseline="middle"
-                  fontSize={isActive?13:10} fill={isActive?d.color:"rgba(255,255,255,0.4)"}
-                  style={{userSelect:"none"}}>{d.emoji}</text>
-                <text x={p.x} y={p.y-9} textAnchor="middle" fontSize="7"
-                  fill={isActive?d.color:"rgba(255,255,255,0.2)"}>{d.score}</text>
-              </g>
-            );
-          })}
-          <text x={150} y={142} textAnchor="middle" fontSize="22" fontWeight="800"
-            fill="rgba(255,255,255,0.85)" fontFamily="'Cormorant Garamond',serif">{avg}</text>
-          <text x={150} y={160} textAnchor="middle" fontSize="7" letterSpacing="1.5"
-            fill="rgba(255,255,255,0.25)">LIFE SCORE</text>
-        </svg>
-      );
-    }
-
-    function Table({ active, onSelect }) {
-      const sorted = [...DATA].sort((a,b)=>a.score-b.score);
-      return (
-        <div style={{display:"flex",flexDirection:"column",gap:"2px"}}>
-          <div style={{display:"grid",gridTemplateColumns:"2fr 1fr 50px",
-            padding:"0 0.5rem 0.6rem",borderBottom:"1px solid rgba(255,255,255,0.06)",marginBottom:"0.3rem"}}>
-            {["Dimension","","Score"].map((h,i)=>(
-              <div key={i} style={{fontSize:"0.52rem",letterSpacing:"0.12em",textTransform:"uppercase",
-                color:"rgba(255,255,255,0.2)",textAlign:i===2?"right":"left"}}>{h}</div>
-            ))}
+        <div style={{animation:"fadeIn 0.3s ease"}}>
+          <div style={{display:"flex",justifyContent:"center",marginBottom:"0.5rem"}}>
+            <svg viewBox="0 0 300 300" style={{width:"100%",maxWidth:300,overflow:"visible"}}>
+              {[2,4,6,8,10].map(lv=>(
+                <polygon key={lv}
+                  points={DIMS.map((_,i)=>{const p=pt(i,(lv/10)*maxR);return`${p.x},${p.y}`;}).join(" ")}
+                  fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth={lv===10?1.2:0.7}/>
+              ))}
+              {DIMS.map((_,i)=>{const o=pt(i,maxR);return<line key={i} x1={cx} y1={cy} x2={o.x} y2={o.y} stroke="rgba(255,255,255,0.07)" strokeWidth="0.8"/>;  })}
+              <path d={path} fill="rgba(167,139,250,0.15)" stroke="rgba(167,139,250,0.6)" strokeWidth="1.5" style={{transition:"all 0.3s ease"}}/>
+              {DIMS.map((d,i)=>{
+                const r=((scores[d.id]||0)/10)*maxR;
+                const p=pt(i,Math.max(r,4));
+                const lp=pt(i,maxR+26);
+                const has=scores[d.id]>0;
+                return(
+                  <g key={d.id} onClick={()=>setActive(active===d.id?null:d.id)} style={{cursor:"pointer"}}>
+                    <circle cx={p.x} cy={p.y} r={active===d.id?7:5}
+                      fill={has?d.color:"rgba(255,255,255,0.2)"}
+                      stroke={active===d.id?"white":"none"} strokeWidth="1.5"
+                      style={{filter:active===d.id?`drop-shadow(0 0 5px ${d.color})`:"none",transition:"all 0.2s"}}/>
+                    <text x={lp.x} y={lp.y} textAnchor="middle" dominantBaseline="middle"
+                      fontSize={active===d.id?14:11}
+                      fill={active===d.id?d.color:"rgba(255,255,255,0.45)"}
+                      style={{userSelect:"none",transition:"all 0.2s"}}>{d.emoji}</text>
+                    {has&&<text x={p.x} y={p.y-9} textAnchor="middle" fontSize="7" fill={active===d.id?d.color:"rgba(255,255,255,0.3)"}>{scores[d.id]}</text>}
+                  </g>
+                );
+              })}
+              <text x={cx} y={cy-6} textAnchor="middle" fontSize="9" fill="rgba(255,255,255,0.2)" letterSpacing="1">TAP</text>
+              <text x={cx} y={cy+6} textAnchor="middle" fontSize="9" fill="rgba(255,255,255,0.2)" letterSpacing="1">TO SCORE</text>
+            </svg>
           </div>
-          {sorted.map(d=>{
-            const isActive=active===d.id;
-            return (
-              <div key={d.id} onClick={()=>onSelect(d.id===active?null:d.id)}
-                style={{display:"grid",gridTemplateColumns:"2fr 1fr 50px",alignItems:"center",
-                  gap:"0.5rem",padding:"0.6rem 0.5rem",borderRadius:"8px",cursor:"pointer",
-                  background:isActive?`${d.color}0f`:"transparent",
-                  border:isActive?`1px solid ${d.color}28`:"1px solid transparent",
-                  transition:"all 0.15s"}}>
-                <div style={{display:"flex",alignItems:"center",gap:"0.5rem"}}>
-                  <span style={{fontSize:"1rem"}}>{d.emoji}</span>
-                  <div style={{fontSize:"0.7rem",fontWeight:"600",
-                    color:isActive?d.color:"rgba(255,255,255,0.7)"}}>{d.label}</div>
+          {active&&(()=>{
+            const dim=DIMS.find(d=>d.id===active);
+            return(
+              <div style={{borderRadius:14,padding:"0.8rem 1rem",background:`linear-gradient(135deg,${dim.color}18,rgba(10,10,20,0.97))`,border:`1px solid ${dim.color}40`,marginBottom:"0.5rem",animation:"slideUp 0.2s ease"}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"0.6rem"}}>
+                  <div style={{display:"flex",alignItems:"center",gap:"0.4rem"}}>
+                    <span style={{fontSize:"1rem"}}>{dim.emoji}</span>
+                    <span style={{fontSize:"0.78rem",fontWeight:"700",color:"white"}}>{dim.label}</span>
+                  </div>
+                  <div style={{display:"flex",alignItems:"center",gap:"0.5rem"}}>
+                    <span style={{fontFamily:"'Playfair Display',serif",fontSize:"1.4rem",fontWeight:"900",color:dim.color}}>{scores[dim.id]||"–"}</span>
+                    <button onClick={()=>setActive(null)} style={{background:"rgba(255,255,255,0.08)",border:"none",borderRadius:"50%",width:22,height:22,color:"rgba(255,255,255,0.4)",cursor:"pointer",fontSize:"0.7rem"}}>✕</button>
+                  </div>
                 </div>
-                <div style={{height:4,background:"rgba(255,255,255,0.07)",borderRadius:2}}>
-                  <div style={{height:"100%",width:`${d.score*10}%`,borderRadius:2,
-                    background:`linear-gradient(90deg,${d.color}88,${d.color})`,transition:"width 0.4s"}}/>
-                </div>
-                <div style={{textAlign:"right",fontSize:"0.85rem",fontWeight:"800",
-                  color:isActive?d.color:"rgba(255,255,255,0.6)",fontFamily:"'Cormorant Garamond',serif"}}>
-                  {d.score}<span style={{fontSize:"0.45rem",color:"rgba(255,255,255,0.2)",fontFamily:"sans-serif"}}>/10</span>
+                <div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:6}}>
+                  {[1,2,3,4,5,6,7,8,9,10].map(n=>(
+                    <button key={n} onClick={()=>{onScore(dim.id,n);setActive(null);}} style={{
+                      height:34,borderRadius:8,
+                      background:n===scores[dim.id]?dim.color:"rgba(255,255,255,0.07)",
+                      border:n===scores[dim.id]?"none":"1px solid rgba(255,255,255,0.12)",
+                      color:n===scores[dim.id]?"white":"rgba(255,255,255,0.55)",
+                      fontWeight:n===scores[dim.id]?"800":"500",
+                      fontSize:"0.82rem",cursor:"pointer",
+                      fontFamily:"'Playfair Display',serif",transition:"all 0.12s"
+                    }}>{n}</button>
+                  ))}
                 </div>
               </div>
             );
-          })}
+          })()}
+          <div style={{display:"flex",flexWrap:"wrap",gap:"0.35rem"}}>
+            {DIMS.map(d=>(
+              <button key={d.id} onClick={()=>setActive(active===d.id?null:d.id)} style={{
+                padding:"0.25rem 0.55rem",borderRadius:20,
+                background:active===d.id?`${d.color}25`:"rgba(255,255,255,0.04)",
+                border:active===d.id?`1px solid ${d.color}60`:"1px solid rgba(255,255,255,0.08)",
+                color:active===d.id?d.color:"rgba(255,255,255,0.4)",
+                fontSize:"0.6rem",cursor:"pointer",transition:"all 0.15s",
+                display:"flex",alignItems:"center",gap:"0.3rem"
+              }}>
+                <span>{d.emoji}</span>
+                <span style={{fontFamily:"'Playfair Display',serif",fontWeight:"700"}}>{scores[d.id]||"–"}</span>
+              </button>
+            ))}
+          </div>
         </div>
       );
     }
 
     function App() {
-      const [view, setView] = useState("wheel");
-      const [active, setActive] = useState(null);
-      const activeDim = DATA.find(d=>d.id===active);
+      const [scores, setScores] = useState({});
+      const [view, setView] = useState("cards");
+      const setScore = (id, val) => setScores(s => ({...s, [id]: val}));
 
       return (
-        <div style={{minHeight:"100vh",
-          background:"radial-gradient(ellipse at 20% 10%,#16082e 0%,#0c0c1a 45%,#050508 100%)",
-          fontFamily:"'DM Sans',sans-serif",color:"rgba(255,255,255,0.85)",
-          display:"flex",flexDirection:"column",alignItems:"center"}}>
-
-          <div style={{width:"100%",maxWidth:400,padding:"2rem 1.25rem 4rem"}}>
+        <div style={{minHeight:"100vh",background:"#080810",fontFamily:"'DM Sans',sans-serif",color:"white"}}>
+          <div style={{maxWidth:420,margin:"0 auto",padding:"0.9rem 1rem 3rem"}}>
 
             {/* Header */}
-            <div style={{marginBottom:"1.6rem",display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
-              <div>
-                <h1 style={{fontFamily:"'Cormorant Garamond',serif",fontSize:"1.6rem",fontWeight:"800",
-                  background:"linear-gradient(135deg,#e2d9f3,#a78bfa)",
-                  WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",
-                  letterSpacing:"-0.02em",lineHeight:1.1,marginBottom:"0.2rem"}}>
-                  Next Right Action
-                </h1>
-                <p style={{fontSize:"0.55rem",color:"rgba(255,255,255,0.2)",letterSpacing:"0.15em",textTransform:"uppercase"}}>
-                  Life Inventory & Action
-                </p>
-              </div>
-              {/* Toggle */}
-              <div style={{display:"inline-flex",background:"rgba(255,255,255,0.04)",
-                borderRadius:"10px",padding:"3px",border:"1px solid rgba(255,255,255,0.07)"}}>
-                {[["wheel","◎"],["table","≡"]].map(([v,label])=>(
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"0.8rem"}}>
+              <h1 style={{
+                fontFamily:"'Playfair Display',serif",fontSize:"1.8rem",fontWeight:"900",
+                background:"linear-gradient(135deg,#e2d9f3,#a78bfa 50%,#67e8f9)",
+                WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",
+                letterSpacing:"-0.02em",lineHeight:1
+              }}>Life Inventory</h1>
+              <div style={{display:"flex",background:"rgba(255,255,255,0.05)",borderRadius:12,padding:3,border:"1px solid rgba(255,255,255,0.09)"}}>
+                {[["cards","▦"],["wheel","◎"]].map(([v,icon])=>(
                   <button key={v} onClick={()=>setView(v)} style={{
-                    padding:"0.4rem 0.8rem",borderRadius:"7px",fontSize:"0.8rem",
-                    fontWeight:"600",cursor:"pointer",border:"none",transition:"all 0.2s",
-                    background:view===v?"rgba(167,139,250,0.2)":"transparent",
-                    color:view===v?"#c4b5fd":"rgba(255,255,255,0.25)"}}>
-                    {label}
-                  </button>
+                    padding:"0.35rem 0.7rem",borderRadius:9,
+                    background:view===v?"rgba(167,139,250,0.22)":"transparent",
+                    border:view===v?"1px solid rgba(167,139,250,0.45)":"1px solid transparent",
+                    color:view===v?"#c4b5fd":"rgba(255,255,255,0.3)",
+                    fontSize:"0.8rem",cursor:"pointer",transition:"all 0.15s"
+                  }}>{icon}</button>
                 ))}
               </div>
             </div>
 
-            {/* Score summary */}
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",
-              padding:"0.8rem 1.2rem",marginBottom:"1.2rem",
-              background:"rgba(255,255,255,0.03)",borderRadius:"12px",
-              border:"1px solid rgba(255,255,255,0.06)"}}>
-              <div>
-                <div style={{fontSize:"2.2rem",fontWeight:"900",fontFamily:"'Cormorant Garamond',serif",
-                  background:"linear-gradient(135deg,#e879f9,#818cf8)",
-                  WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",lineHeight:1}}>{avg}</div>
-                <div style={{fontSize:"0.5rem",color:"rgba(255,255,255,0.2)",letterSpacing:"0.1em",textTransform:"uppercase"}}>
-                  Overall Score
-                </div>
-              </div>
-              <div style={{textAlign:"right",fontSize:"0.6rem",color:"rgba(255,255,255,0.3)",fontStyle:"italic",maxWidth:"160px"}}>
-                "What is your next right action?"
-              </div>
+            {/* Mission */}
+            <div style={{borderRadius:18,padding:"0.8rem 1rem",background:"linear-gradient(135deg,#1a1035,#0e0e20)",border:"1px solid rgba(167,139,250,0.2)",marginBottom:"0.75rem",position:"relative",overflow:"hidden"}}>
+              <div style={{position:"absolute",top:-15,right:-15,width:70,height:70,borderRadius:"50%",background:"rgba(167,139,250,0.07)",pointerEvents:"none"}}/>
+              <div style={{fontSize:"0.48rem",color:"rgba(167,139,250,0.8)",letterSpacing:"0.14em",textTransform:"uppercase",fontWeight:"700",marginBottom:"0.3rem"}}>◈ My Mission</div>
+              <div style={{fontSize:"0.72rem",color:"rgba(255,255,255,0.7)",lineHeight:"1.5",fontStyle:"italic"}}>"{MISSION}"</div>
             </div>
 
-            {/* Main view */}
-            <div style={{background:"rgba(255,255,255,0.025)",borderRadius:"18px",
-              border:"1px solid rgba(255,255,255,0.07)",padding:"1.5rem 1rem",backdropFilter:"blur(12px)"}}>
-              {view==="wheel"
-                ? <Radar active={active} onSelect={setActive}/>
-                : <Table active={active} onSelect={setActive}/>}
-            </div>
-
-            {/* Next right action panel */}
-            {activeDim && (
-              <div style={{marginTop:"0.8rem",padding:"1rem 1.1rem",
-                background:`linear-gradient(135deg,${activeDim.color}0c,rgba(10,10,20,0.95))`,
-                borderRadius:"12px",border:`1px solid ${activeDim.color}28`}}>
-                <div style={{fontSize:"0.55rem",color:"rgba(255,255,255,0.25)",
-                  letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:"0.5rem"}}>
-                  Next Right Action
+            {/* Views */}
+            {view==="cards"
+              ? <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"0.65rem",animation:"fadeIn 0.25s ease"}}>
+                  {DIMS.map(dim=><DimCard key={dim.id} dim={dim} score={scores[dim.id]||0} onScore={v=>setScore(dim.id,v)}/>)}
                 </div>
-                <div style={{fontSize:"0.85rem",fontWeight:"600",
-                  color:"rgba(255,255,255,0.85)",lineHeight:"1.6"}}>
-                  {ACTIONS[activeDim.id]}
-                </div>
-                <div style={{marginTop:"0.6rem",fontSize:"0.6rem",color:activeDim.color}}>
-                  {activeDim.emoji} {activeDim.label} — {activeDim.sub}
-                </div>
-              </div>
-            )}
+              : <WheelView scores={scores} onScore={setScore}/>
+            }
 
             {/* Footer */}
-            <div style={{marginTop:"2rem",textAlign:"center",
-              fontSize:"0.58rem",color:"rgba(255,255,255,0.15)",lineHeight:"1.8",fontStyle:"italic"}}>
-              "You don't have to believe in God<br/>to surrender to reality."
-              <br/><br/>
-              Built on honesty. Inventory. Action.
+            <div style={{marginTop:"1.5rem",textAlign:"center",fontSize:"0.58rem",color:"rgba(255,255,255,0.2)",lineHeight:"1.8",fontStyle:"italic"}}>
+              This app is a compass, not a destination.<br/>Put it down often.<br/><br/>
+              A little better than an hour ago is a massive win.
             </div>
 
           </div>
