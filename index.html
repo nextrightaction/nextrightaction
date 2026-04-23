@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#080810"/>
   <title>Honor Your Life</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800;900&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Playfair+Display:wght@700;800;900&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
@@ -14,344 +14,332 @@
     *{box-sizing:border-box;margin:0;padding:0;}
     body{background:#080810;font-family:'DM Sans',sans-serif;color:white;overflow-x:hidden;}
     button{font-family:inherit;}
+    input::-webkit-inner-spin-button,input::-webkit-outer-spin-button{-webkit-appearance:none;}
+    input[type=number]{-moz-appearance:textfield;}
     @keyframes fadeIn{from{opacity:0}to{opacity:1}}
-    @keyframes slideUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes slideUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
   </style>
 </head>
 <body>
 <div id="root"></div>
 <script type="text/babel">
-const { useState, useEffect } = React;
+const { useState, useEffect, useRef } = React;
 
 const MISSION = "I create a world of love and abundance, by being confident, taking risks, and never giving up.";
 const VISION  = "I am a polylingual adventurer, joyfully engaged physically and spiritually with the natural world. I live strenuously, advancing in intellect and physical skills as a way of life. I am a global expert in economic and financial modeling. I am loved and respected by my family and my community.";
 const VALUES  = ["Community","Integrity","Service","Inclusivity","Leadership","Accountability","Emotional Intelligence","Continuous Growth"];
 
 const DIMS = [
-  { id:1,  label:"Inner Life",    sub:"Spirituality",        emoji:"✨", color:"#6D3FC8", goal:"Vipassana retreat this year",       habit:"Meditate 10 min",      mentor:"Mary from BWWS" },
-  { id:2,  label:"Mental Health", sub:"Wellbeing",           emoji:"🧠", color:"#0C7EA0", goal:"DBT/CBT program",                   habit:"Examen / 11th Step",   mentor:"Lisa Swihart" },
-  { id:3,  label:"Community",     sub:"Service",             emoji:"🌍", color:"#0A6B4A", goal:"TSL Leader",                        habit:"Good deed daily",      mentor:"Mary & Joel De Jong" },
-  { id:4,  label:"Body",          sub:"Health & Fitness",    emoji:"💪", color:"#A01830", goal:"Strong & agile",                    habit:"Move outside 60 min",  mentor:"TSL / Strenuous Life" },
-  { id:5,  label:"Relationships", sub:"Friends & Family",    emoji:"❤️", color:"#B45309", goal:"Close to my boys",                  habit:"Time with family",     mentor:"Paul, Todd, Jeff" },
-  { id:6,  label:"Environment",   sub:"Home & Work",         emoji:"🏡", color:"#1D4ED8", goal:"Intentional beautiful space",       habit:"10 min daily tidy",    mentor:"—" },
-  { id:7,  label:"Play",          sub:"Fun & Rest",          emoji:"🎉", color:"#0D7A6E", goal:"National Parks expert",             habit:"Adventure weekly",     mentor:"Milo, Tracy" },
-  { id:8,  label:"Money",         sub:"Financial",           emoji:"💰", color:"#3D6B0A", goal:"Financially independent",           habit:"Record spending",      mentor:"Underearners Anonymous" },
-  { id:9,  label:"Vocation",      sub:"Career & Learning",   emoji:"🚀", color:"#3730A3", goal:"Maritime Officer + Business Owner", habit:"Write 60 min daily",   mentor:"Katsuko, Kristen, James" },
-  { id:10, label:"Intimacy",      sub:"Relationship",        emoji:"🌹", color:"#9D174D", goal:"Loving partnership",                habit:"Quality time",         mentor:"Joseph Losi" },
-  { id:11, label:"Time Wealth",   sub:"Who Owns Your Hours", emoji:"⏳", color:"#92400E", goal:"6 months on, 6 months mine",        habit:"Calendar review AM",   mentor:"—" },
-  { id:12, label:"Repair",        sub:"Reconciliation",      emoji:"🤝", color:"#134E4A", goal:"12-Step graduate",                  habit:"Evening inventory",    mentor:"Sponsor / MKP brothers" },
+  { id:1,  label:"Inner Life",    sub:"Spirituality",        emoji:"✨", color:"#6D3FC8" },
+  { id:2,  label:"Mental Health", sub:"Wellbeing",           emoji:"🧠", color:"#0C7EA0" },
+  { id:3,  label:"Community",     sub:"Service",             emoji:"🌍", color:"#0A6B4A" },
+  { id:4,  label:"Body",          sub:"Health & Fitness",    emoji:"💪", color:"#A01830" },
+  { id:5,  label:"Relationships", sub:"Friends & Family",    emoji:"❤️", color:"#B45309" },
+  { id:6,  label:"Environment",   sub:"Home & Work",         emoji:"🏡", color:"#1D4ED8" },
+  { id:7,  label:"Play",          sub:"Fun & Rest",          emoji:"🎉", color:"#0D7A6E" },
+  { id:8,  label:"Money",         sub:"Financial",           emoji:"💰", color:"#3D6B0A" },
+  { id:9,  label:"Vocation",      sub:"Career & Learning",   emoji:"🚀", color:"#3730A3" },
+  { id:10, label:"Intimacy",      sub:"Relationship",        emoji:"🌹", color:"#9D174D" },
+  { id:11, label:"Time Wealth",   sub:"Who Owns Your Hours", emoji:"⏳", color:"#92400E" },
+  { id:12, label:"Repair",        sub:"Reconciliation",      emoji:"🤝", color:"#134E4A" },
 ];
 
-const DAILY_HABITS = [
-  {l:"Meditate 10 min",e:"🧘"},{l:"Calendar review",e:"📅"},{l:"Good deed",e:"🌱"},
-  {l:"Move outside 60 min",e:"🏃"},{l:"Examen / 11th Step",e:"🕯️"},{l:"Spanish practice",e:"🇪🇸"},
-  {l:"Next day list",e:"📝"},{l:"Record time",e:"⏱️"},{l:"Write 60 min",e:"✍️"},
-  {l:"Time with Milo",e:"👦"},{l:"Record spending",e:"💳"},{l:"Strength training",e:"💪"},
-  {l:"Time with Tracy",e:"❤️"},{l:"Read 30 min AM+PM",e:"📚"},{l:"Time with Elliott",e:"👨"},
-];
+const DAILY_HABITS=[{l:"Meditate 10 min",e:"🧘"},{l:"Calendar review",e:"📅"},{l:"Good deed",e:"🌱"},{l:"Move outside 60 min",e:"🏃"},{l:"Examen / 11th Step",e:"🕯️"},{l:"Spanish practice",e:"🇪🇸"},{l:"Next day list",e:"📝"},{l:"Record time",e:"⏱️"},{l:"Write 60 min",e:"✍️"},{l:"Time with Milo",e:"👦"},{l:"Record spending",e:"💳"},{l:"Strength training",e:"💪"}];
+const SMART_GOALS=["Financially Independent","Career Leader","Loving Father","Strong & Agile","Spanish Speaker","Loving Husband","National Parks Expert","Winter Sports Expert","Business Owner","TSL Leader","MKP Leader","12-Step Graduate","Vipassana","Hoffman Process","Writer","Toastmaster","ADHD Mastery","DBT/CBT"];
 
-const SMART_GOALS = [
-  "Financially Independent","Career Leader","Loving Father","Strong & Agile",
-  "Spanish Speaker","Loving Husband","National Parks Expert","Winter Sports Expert",
-  "Business Owner","TSL Leader","MKP Leader","12-Step Graduate",
-  "Vipassana","Hoffman Process","Writer","Toastmaster","ADHD Mastery","DBT/CBT",
-];
+function getViewFromURL(){const p=window.location.pathname.toLowerCase();if(p.includes("compass"))return"compass";if(p.includes("wheel"))return"wheel";return"list";}
+function setURLView(v){window.history.pushState({},"",{compass:"/compass",list:"/list",wheel:"/wheel"}[v]||"/list");}
 
-function getViewFromURL() {
-  const p = window.location.pathname.toLowerCase();
-  if(p.includes("compass")) return "compass";
-  if(p.includes("wheel"))   return "wheel";
-  return "list";
-}
-function setURLView(v) {
-  const m={compass:"/compass",list:"/list",wheel:"/wheel"};
-  window.history.pushState({},"",m[v]||"/list");
+// ── Toggle Icons ──────────────────────────────────────────────────────────────
+function CompassIcon({size=26,active}){const c=size/2,r=size*0.42,s=active?"white":"rgba(255,255,255,0.45)";return(<svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}><circle cx={c} cy={c} r={r} fill="none" stroke={s} strokeWidth="1.8"/><line x1={c} y1={c-r} x2={c} y2={c-r*0.3} stroke={s} strokeWidth="1.5"/><line x1={c} y1={c+r*0.3} x2={c} y2={c+r} stroke={s} strokeWidth="1.5"/><line x1={c-r} y1={c} x2={c-r*0.3} y2={c} stroke={s} strokeWidth="1.5"/><line x1={c+r*0.3} y1={c} x2={c+r} y2={c} stroke={s} strokeWidth="1.5"/><text x={c} y={c-r+7} textAnchor="middle" fontSize="5.5" fill={s} fontWeight="800">N</text><polygon points={`${c},${c-r*0.52} ${c-3.5},${c+3} ${c+3.5},${c+3}`} fill={active?"#ef4444":"rgba(239,68,68,0.55)"}/><polygon points={`${c},${c+r*0.52} ${c-3.5},${c-3} ${c+3.5},${c-3}`} fill={s}/><circle cx={c} cy={c} r="2.5" fill={s}/></svg>);}
+function ListIcon({size=26,active}){const s=active?"white":"rgba(255,255,255,0.45)";const dots=[];for(let row=0;row<4;row++)for(let col=0;col<3;col++)dots.push(<circle key={`${row}-${col}`} cx={size*0.22+col*(size*0.28)} cy={size*0.15+row*(size*0.24)} r="2.8" fill={s}/>);return <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>{dots}</svg>;}
+function WheelIcon({size=26,active}){const c=size/2,r=size*0.42,s=active?"white":"rgba(255,255,255,0.45)";return(<svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}><circle cx={c} cy={c} r={r} fill="none" stroke={s} strokeWidth="1.8"/><circle cx={c} cy={c} r={r*0.62} fill="none" stroke={s} strokeWidth="1" strokeDasharray="2,2"/><circle cx={c} cy={c} r={r*0.28} fill="none" stroke={s} strokeWidth="1"/>{Array.from({length:12},(_,i)=>{const a=(i/12)*Math.PI*2-Math.PI/2;return<line key={i} x1={c} y1={c} x2={c+r*Math.cos(a)} y2={c+r*Math.sin(a)} stroke={s} strokeWidth="1.2"/>;})}<circle cx={c} cy={c} r="2.5" fill={s}/></svg>);}
+
+function ViewToggle({view,setView}){
+  return(<div style={{display:"flex",gap:"0.35rem"}}>{[{id:"compass",label:"Compass",Icon:CompassIcon},{id:"list",label:"List",Icon:ListIcon},{id:"wheel",label:"Wheel",Icon:WheelIcon}].map(({id,label,Icon})=>{const on=view===id;return(<button key={id} onClick={()=>setView(id)} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:"3px",padding:"0.35rem 0.4rem",borderRadius:10,background:on?"rgba(167,139,250,0.2)":"rgba(255,255,255,0.04)",border:on?"1px solid rgba(167,139,250,0.5)":"1px solid rgba(255,255,255,0.09)",cursor:"pointer",transition:"all 0.15s",minWidth:46}}><Icon size={24} active={on}/><span style={{fontSize:"0.4rem",letterSpacing:"0.09em",textTransform:"uppercase",color:on?"#c4b5fd":"rgba(255,255,255,0.3)",fontWeight:"700"}}>{label}</span></button>);})}</div>);
 }
 
-// ── Icons ─────────────────────────────────────────────────────────────────────
-function CompassIcon({size=28,active}) {
-  const c=size/2,r=size*0.42,s=active?"white":"rgba(255,255,255,0.45)";
-  return (
-    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-      <circle cx={c} cy={c} r={r} fill="none" stroke={s} strokeWidth="1.8"/>
-      <line x1={c} y1={c-r} x2={c} y2={c-r*0.3} stroke={s} strokeWidth="1.5"/>
-      <line x1={c} y1={c+r*0.3} x2={c} y2={c+r} stroke={s} strokeWidth="1.5"/>
-      <line x1={c-r} y1={c} x2={c-r*0.3} y2={c} stroke={s} strokeWidth="1.5"/>
-      <line x1={c+r*0.3} y1={c} x2={c+r} y2={c} stroke={s} strokeWidth="1.5"/>
-      <text x={c} y={c-r+7} textAnchor="middle" fontSize="5.5" fill={s} fontWeight="800">N</text>
-      <polygon points={`${c},${c-r*0.52} ${c-3.5},${c+3} ${c+3.5},${c+3}`} fill={active?"#ef4444":"rgba(239,68,68,0.55)"}/>
-      <polygon points={`${c},${c+r*0.52} ${c-3.5},${c-3} ${c+3.5},${c-3}`} fill={s}/>
-      <circle cx={c} cy={c} r="2.5" fill={s}/>
-    </svg>
-  );
-}
+// ── List Card ─────────────────────────────────────────────────────────────────
+function ScorePicker({score,onChange,color,onClose}){return(<div onClick={e=>e.stopPropagation()} style={{position:"absolute",bottom:"calc(100% + 8px)",left:"50%",transform:"translateX(-50%)",background:"#1A1A2E",border:`1.5px solid ${color}`,borderRadius:14,padding:"0.6rem 0.7rem",zIndex:200,boxShadow:"0 8px 32px rgba(0,0,0,0.8)",width:200}}><div style={{fontSize:"0.5rem",color:"rgba(255,255,255,0.4)",letterSpacing:"0.12em",textTransform:"uppercase",textAlign:"center",marginBottom:"0.5rem"}}>Tap to score</div><div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:5}}>{[1,2,3,4,5,6,7,8,9,10].map(n=>(<button key={n} onClick={()=>{onChange(n);onClose();}} style={{height:32,borderRadius:8,background:n===score?color:"rgba(255,255,255,0.07)",border:n===score?"none":"1px solid rgba(255,255,255,0.12)",color:n===score?"white":"rgba(255,255,255,0.55)",fontWeight:n===score?"800":"500",fontSize:"0.78rem",cursor:"pointer",fontFamily:"'Playfair Display',serif",transition:"all 0.12s"}}>{n}</button>))}</div></div>);}
 
-function ListIcon({size=28,active}) {
-  const s=active?"white":"rgba(255,255,255,0.45)";
-  const dots=[];
-  for(let row=0;row<4;row++) for(let col=0;col<3;col++) {
-    dots.push(<circle key={`${row}-${col}`} cx={size*0.22+col*(size*0.28)} cy={size*0.15+row*(size*0.24)} r="2.8" fill={s}/>);
-  }
-  return <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>{dots}</svg>;
-}
-
-function WheelIcon({size=28,active}) {
-  const c=size/2,r=size*0.42,s=active?"white":"rgba(255,255,255,0.45)";
-  return (
-    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-      <circle cx={c} cy={c} r={r} fill="none" stroke={s} strokeWidth="1.8"/>
-      <circle cx={c} cy={c} r={r*0.62} fill="none" stroke={s} strokeWidth="1" strokeDasharray="2,2"/>
-      <circle cx={c} cy={c} r={r*0.28} fill="none" stroke={s} strokeWidth="1"/>
-      {Array.from({length:12},(_,i)=>{
-        const a=(i/12)*Math.PI*2-Math.PI/2;
-        return <line key={i} x1={c} y1={c} x2={c+r*Math.cos(a)} y2={c+r*Math.sin(a)} stroke={s} strokeWidth="1.2"/>;
-      })}
-      <circle cx={c} cy={c} r="2.5" fill={s}/>
-    </svg>
-  );
-}
-
-function ViewToggle({view,setView}) {
-  const tabs=[{id:"compass",label:"Compass",Icon:CompassIcon},{id:"list",label:"List",Icon:ListIcon},{id:"wheel",label:"Wheel",Icon:WheelIcon}];
-  return (
-    <div style={{display:"flex",gap:"0.4rem"}}>
-      {tabs.map(({id,label,Icon})=>{
-        const on=view===id;
-        return(
-          <button key={id} onClick={()=>setView(id)} style={{
-            display:"flex",flexDirection:"column",alignItems:"center",gap:"3px",
-            padding:"0.38rem 0.45rem",borderRadius:10,
-            background:on?"rgba(167,139,250,0.2)":"rgba(255,255,255,0.04)",
-            border:on?"1px solid rgba(167,139,250,0.5)":"1px solid rgba(255,255,255,0.09)",
-            cursor:"pointer",transition:"all 0.15s",minWidth:50
-          }}>
-            <Icon size={26} active={on}/>
-            <span style={{fontSize:"0.42rem",letterSpacing:"0.09em",textTransform:"uppercase",color:on?"#c4b5fd":"rgba(255,255,255,0.3)",fontWeight:"700"}}>{label}</span>
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
-// ── Score Picker ──────────────────────────────────────────────────────────────
-function ScorePicker({score,onChange,color,onClose}) {
-  return (
-    <div onClick={e=>e.stopPropagation()} style={{position:"absolute",bottom:"calc(100% + 8px)",left:"50%",transform:"translateX(-50%)",background:"#1A1A2E",border:`1.5px solid ${color}`,borderRadius:14,padding:"0.6rem 0.7rem",zIndex:200,boxShadow:"0 8px 32px rgba(0,0,0,0.8)",width:200}}>
-      <div style={{fontSize:"0.5rem",color:"rgba(255,255,255,0.4)",letterSpacing:"0.12em",textTransform:"uppercase",textAlign:"center",marginBottom:"0.5rem"}}>Tap to score</div>
-      <div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:5}}>
-        {[1,2,3,4,5,6,7,8,9,10].map(n=>(
-          <button key={n} onClick={()=>{onChange(n);onClose();}} style={{height:32,borderRadius:8,background:n===score?color:"rgba(255,255,255,0.07)",border:n===score?"none":"1px solid rgba(255,255,255,0.12)",color:n===score?"white":"rgba(255,255,255,0.55)",fontWeight:n===score?"800":"500",fontSize:"0.78rem",cursor:"pointer",fontFamily:"'Playfair Display',serif",transition:"all 0.12s"}}>{n}</button>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// ── List View ─────────────────────────────────────────────────────────────────
-function DimCard({dim,score,onScore}) {
-  const [open,setOpen]=useState(false);
-  const has=score>0,H=110;
-  return (
-    <div style={{position:"relative"}}>
-      <div style={{borderRadius:18,background:`linear-gradient(150deg,${dim.color}f0 0%,${dim.color}b0 100%)`,height:H,padding:"0.75rem 0.8rem",boxShadow:`0 4px 20px ${dim.color}44`,position:"relative",overflow:"hidden",display:"flex",flexDirection:"column",justifyContent:"space-between"}}>
-        <div style={{position:"absolute",top:0,left:0,right:0,height:"45%",background:"rgba(255,255,255,0.09)",borderRadius:"18px 18px 50% 50%",pointerEvents:"none"}}/>
-        <div style={{display:"flex",alignItems:"flex-start",position:"relative",zIndex:1}}>
-          <div style={{flex:1,paddingRight:"0.4rem"}}>
-            <div style={{fontSize:"1.1rem",lineHeight:1,marginBottom:"0.2rem"}}>{dim.emoji}</div>
-            <div style={{fontSize:"0.75rem",fontWeight:"700",color:"white",lineHeight:1.15}}>{dim.label}</div>
-            <div style={{fontSize:"0.55rem",color:"rgba(255,255,255,0.6)",marginTop:"1px"}}>{dim.sub}</div>
-          </div>
-          <div style={{width:"42%",display:"flex",alignItems:"center",justifyContent:"center"}}>
-            {has
-              ?<div style={{fontFamily:"'Playfair Display',serif",fontSize:`${H*0.58}px`,fontWeight:"900",color:"rgba(255,255,255,0.92)",lineHeight:1,letterSpacing:"-0.04em",textShadow:"0 2px 12px rgba(0,0,0,0.3)"}}>{score}</div>
-              :<div style={{fontFamily:"'Playfair Display',serif",fontSize:`${H*0.22}px`,fontWeight:"700",color:"rgba(255,255,255,0.25)",lineHeight:1}}>–</div>
-            }
-          </div>
-        </div>
-        <div style={{position:"relative",zIndex:1}}>
-          <div style={{height:2.5,background:"rgba(255,255,255,0.18)",borderRadius:2}}>
-            <div style={{height:"100%",width:has?`${score*10}%`:"0%",background:"rgba(255,255,255,0.7)",borderRadius:2,transition:"width 0.35s ease"}}/>
-          </div>
-        </div>
-        <button onClick={e=>{e.stopPropagation();setOpen(o=>!o);}} style={{position:"absolute",top:8,right:8,padding:"2px 7px",borderRadius:20,background:has?"rgba(34,197,94,0.25)":"rgba(239,68,68,0.25)",border:has?"1px solid rgba(34,197,94,0.5)":"1px solid rgba(239,68,68,0.5)",color:has?"#4ADE80":"#FCA5A5",fontSize:"0.48rem",fontWeight:"800",letterSpacing:"0.06em",textTransform:"uppercase",cursor:"pointer",zIndex:2,display:"flex",alignItems:"center",gap:"3px"}}>
-          {has?<><span style={{fontSize:"0.65rem"}}>✓</span><span>Scored</span></>:<><span style={{fontSize:"0.55rem"}}>+</span><span>Score</span></>}
-        </button>
-      </div>
-      {open&&<ScorePicker score={score} onChange={onScore} color={dim.color} onClose={()=>setOpen(false)}/>}
-    </div>
-  );
-}
+function DimCard({dim,score,onScore}){const [open,setOpen]=useState(false);const has=score>0,H=110;return(<div style={{position:"relative"}}><div style={{borderRadius:18,background:`linear-gradient(150deg,${dim.color}f0 0%,${dim.color}b0 100%)`,height:H,padding:"0.75rem 0.8rem",boxShadow:`0 4px 20px ${dim.color}44`,position:"relative",overflow:"hidden",display:"flex",flexDirection:"column",justifyContent:"space-between"}}><div style={{position:"absolute",top:0,left:0,right:0,height:"45%",background:"rgba(255,255,255,0.09)",borderRadius:"18px 18px 50% 50%",pointerEvents:"none"}}/><div style={{display:"flex",alignItems:"flex-start",position:"relative",zIndex:1}}><div style={{flex:1,paddingRight:"0.4rem"}}><div style={{fontSize:"1.1rem",lineHeight:1,marginBottom:"0.2rem"}}>{dim.emoji}</div><div style={{fontSize:"0.75rem",fontWeight:"700",color:"white",lineHeight:1.15}}>{dim.label}</div><div style={{fontSize:"0.55rem",color:"rgba(255,255,255,0.6)",marginTop:"1px"}}>{dim.sub}</div></div><div style={{width:"42%",display:"flex",alignItems:"center",justifyContent:"center"}}>{has?<div style={{fontFamily:"'Playfair Display',serif",fontSize:`${H*0.58}px`,fontWeight:"900",color:"rgba(255,255,255,0.92)",lineHeight:1,letterSpacing:"-0.04em",textShadow:"0 2px 12px rgba(0,0,0,0.3)"}}>{score}</div>:<div style={{fontFamily:"'Playfair Display',serif",fontSize:`${H*0.22}px`,fontWeight:"700",color:"rgba(255,255,255,0.25)",lineHeight:1}}>–</div>}</div></div><div style={{position:"relative",zIndex:1}}><div style={{height:2.5,background:"rgba(255,255,255,0.18)",borderRadius:2}}><div style={{height:"100%",width:has?`${score*10}%`:"0%",background:"rgba(255,255,255,0.7)",borderRadius:2,transition:"width 0.35s ease"}}/></div></div><button onClick={e=>{e.stopPropagation();setOpen(o=>!o);}} style={{position:"absolute",top:8,right:8,padding:"2px 7px",borderRadius:20,background:has?"rgba(34,197,94,0.25)":"rgba(239,68,68,0.25)",border:has?"1px solid rgba(34,197,94,0.5)":"1px solid rgba(239,68,68,0.5)",color:has?"#4ADE80":"#FCA5A5",fontSize:"0.48rem",fontWeight:"800",letterSpacing:"0.06em",textTransform:"uppercase",cursor:"pointer",zIndex:2,display:"flex",alignItems:"center",gap:"3px"}}>{has?<><span style={{fontSize:"0.65rem"}}>✓</span><span>Scored</span></>:<><span style={{fontSize:"0.55rem"}}>+</span><span>Score</span></>}</button></div>{open&&<ScorePicker score={score} onChange={onScore} color={dim.color} onClose={()=>setOpen(false)}/>}</div>);}
 
 // ── Wheel View ────────────────────────────────────────────────────────────────
-function WheelView({scores,onScore}) {
-  const [active,setActive]=useState(null);
-  const n=DIMS.length,cx=150,cy=150,maxR=108;
-  const angle=i=>(i*2*Math.PI)/n-Math.PI/2;
-  const pt=(i,r)=>({x:cx+r*Math.cos(angle(i)),y:cy+r*Math.sin(angle(i))});
-  const path=DIMS.map((d,i)=>{const r=((scores[d.id]||0)/10)*maxR;const p=pt(i,Math.max(r,2));return`${i===0?"M":"L"}${p.x.toFixed(1)},${p.y.toFixed(1)}`;}).join(" ")+"Z";
-  return (
-    <div style={{animation:"fadeIn 0.3s ease"}}>
-      <div style={{display:"flex",justifyContent:"center",marginBottom:"0.5rem"}}>
-        <svg viewBox="0 0 300 300" style={{width:"100%",maxWidth:300,overflow:"visible"}}>
-          {[2,4,6,8,10].map(lv=><polygon key={lv} points={DIMS.map((_,i)=>{const p=pt(i,(lv/10)*maxR);return`${p.x},${p.y}`;}).join(" ")} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth={lv===10?1.2:0.7}/>)}
-          {DIMS.map((_,i)=>{const o=pt(i,maxR);return<line key={i} x1={cx} y1={cy} x2={o.x} y2={o.y} stroke="rgba(255,255,255,0.07)" strokeWidth="0.8"/>;  })}
-          <path d={path} fill="rgba(167,139,250,0.15)" stroke="rgba(167,139,250,0.6)" strokeWidth="1.5" style={{transition:"all 0.3s ease"}}/>
+function ScoreNode({dim, score, onScore, tabIndex, totalDims}){
+  // Each score number on the ring edge gets its own +/- inline
+  const [active, setActive] = useState(false);
+  const [draft,  setDraft]  = useState(null);
+  const inputRef = useRef(null);
+  const nodeRef  = useRef(null);
+
+  const display = draft !== null ? draft : (score || 0);
+  const has     = score > 0;
+
+  const commit = (val) => {
+    const v = val !== undefined ? val : display;
+    if(v >= 1 && v <= 10){ onScore(dim.id, v); }
+    setDraft(null);
+    setActive(false);
+  };
+
+  const adjust = (delta) => {
+    const cur = display || 0;
+    const nv  = Math.max(1, Math.min(10, cur + delta));
+    setDraft(nv);
+    onScore(dim.id, nv);
+  };
+
+  const handleKey = (e) => {
+    if(e.key==="ArrowRight"||e.key==="ArrowUp")  {e.preventDefault();adjust(+1);}
+    if(e.key==="ArrowLeft" ||e.key==="ArrowDown") {e.preventDefault();adjust(-1);}
+    if(e.key==="Enter"||e.key==="Tab"){
+      e.preventDefault();
+      commit();
+      // Clockwise: next index
+      const nextId = ((dim.id % totalDims) + 1);
+      setTimeout(()=>{
+        const el = document.getElementById(`score-node-${nextId}`);
+        if(el){ el.click(); setTimeout(()=>{ const inp=document.getElementById(`score-input-${nextId}`); if(inp)inp.focus();},60);}
+      },40);
+    }
+    if(e.key==="Escape"){ setDraft(null); setActive(false); }
+  };
+
+  const handleClickOutside = (e) => {
+    if(nodeRef.current && !nodeRef.current.contains(e.target)){ commit(); }
+  };
+
+  useEffect(()=>{
+    if(active){
+      document.addEventListener("mousedown", handleClickOutside);
+      return ()=>document.removeEventListener("mousedown", handleClickOutside);
+    }
+  },[active, display]);
+
+  return(
+    <div ref={nodeRef} id={`score-node-${dim.id}`}
+      style={{display:"inline-flex",flexDirection:"column",alignItems:"center",gap:"2px",cursor:"pointer"}}
+      onClick={()=>{ if(!active){setActive(true); setTimeout(()=>inputRef.current?.focus(),40);} }}>
+
+      {/* Score number — large, colored, clickable */}
+      <div style={{
+        fontFamily:"'Playfair Display',serif",
+        fontSize: active?"1.3rem":"1.1rem",
+        fontWeight:"900",
+        color: active ? dim.color : has ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.25)",
+        lineHeight:1,
+        transition:"all 0.15s",
+        textShadow: active ? `0 0 12px ${dim.color}` : "none",
+        minWidth:"1.2rem",textAlign:"center",
+      }}>
+        {display > 0 ? display : "·"}
+      </div>
+
+      {/* +/- controls — only when active */}
+      {active && (
+        <div style={{display:"flex",alignItems:"center",gap:"3px",animation:"slideUp 0.12s ease"}}>
+          <button
+            onMouseDown={e=>{e.preventDefault();adjust(-1);}}
+            style={{width:18,height:18,borderRadius:"50%",background:`${dim.color}50`,border:`1px solid ${dim.color}`,color:"white",fontSize:"0.9rem",lineHeight:1,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",padding:0,flexShrink:0}}>−</button>
+          <input
+            ref={inputRef}
+            id={`score-input-${dim.id}`}
+            type="number" min="1" max="10"
+            value={display||""}
+            placeholder="–"
+            onChange={e=>{const v=parseInt(e.target.value);if(v>=1&&v<=10){setDraft(v);onScore(dim.id,v);}}}
+            onKeyDown={handleKey}
+            onBlur={()=>commit()}
+            style={{width:28,height:18,textAlign:"center",background:"rgba(0,0,0,0.5)",border:`1px solid ${dim.color}`,borderRadius:5,color:"white",fontSize:"0.75rem",fontWeight:"800",fontFamily:"'Playfair Display',serif",padding:0,outline:"none"}}
+          />
+          <button
+            onMouseDown={e=>{e.preventDefault();adjust(+1);}}
+            style={{width:18,height:18,borderRadius:"50%",background:`${dim.color}50`,border:`1px solid ${dim.color}`,color:"white",fontSize:"0.9rem",lineHeight:1,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",padding:0,flexShrink:0}}>+</button>
+        </div>
+      )}
+
+      {/* Tiny badge */}
+      {!active && (
+        <div style={{fontSize:"0.35rem",fontWeight:"800",letterSpacing:"0.04em",color:has?"rgba(255,255,255,0.3)":"#FCA5A5",lineHeight:1}}>
+          {has?"":"SCORE"}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function WheelView({scores, onScore}){
+  const N    = DIMS.length;
+  const SVG  = 280; // slightly smaller to push dim 1 below mission card
+  const cx   = SVG/2, cy = SVG/2;
+  const maxR = 100;
+
+  const angle = i => (i*2*Math.PI)/N - Math.PI/2;
+  const pt    = (i,r) => ({x:cx+r*Math.cos(angle(i)), y:cy+r*Math.sin(angle(i))});
+
+  const path = DIMS.map((d,i)=>{
+    const r=((scores[d.id]||0)/10)*maxR;
+    const p=pt(i,Math.max(r,2));
+    return`${i===0?"M":"L"}${p.x.toFixed(1)},${p.y.toFixed(1)}`;
+  }).join(" ")+"Z";
+
+  // Score number ring: just outside outer ring
+  const SCORE_R   = maxR + 18;
+  // Label ring: just outside score numbers — tight
+  const LABEL_R   = maxR + 44;
+
+  return(
+    <div style={{animation:"fadeIn 0.3s ease",padding:"0 0.25rem"}}>
+      <div style={{position:"relative",width:"100%",maxWidth:SVG+180,margin:"0 auto"}}>
+
+        {/* SVG: pure spider + dots */}
+        <svg viewBox={`0 0 ${SVG} ${SVG}`} style={{display:"block",width:"100%",overflow:"visible"}}>
+
+          {/* Ruler: 1–10 on vertical axis */}
+          {[1,2,3,4,5,6,7,8,9,10].map(lv=>(
+            <text key={lv} x={cx+5} y={cy-(lv/10)*maxR+4}
+              fontSize="9" fontWeight="600"
+              fill="rgba(255,255,255,0.3)" textAnchor="start"
+              style={{userSelect:"none"}}>{lv}</text>
+          ))}
+
+          {/* Grid rings */}
+          {[2,4,6,8,10].map(lv=>(
+            <polygon key={lv}
+              points={DIMS.map((_,i)=>{const p=pt(i,(lv/10)*maxR);return`${p.x},${p.y}`;}).join(" ")}
+              fill="none"
+              stroke={lv===10?"rgba(255,255,255,0.35)":"rgba(255,255,255,0.14)"}
+              strokeWidth={lv===10?2:1}/>
+          ))}
+
+          {/* Colored spokes */}
           {DIMS.map((d,i)=>{
-            const r=((scores[d.id]||0)/10)*maxR;
-            const p=pt(i,Math.max(r,4));
-            const lp=pt(i,maxR+26);
-            const has=scores[d.id]>0;
+            const o=pt(i,maxR+6);
+            return<line key={i} x1={cx} y1={cy} x2={o.x} y2={o.y} stroke={d.color} strokeWidth="1.2" strokeOpacity="0.55"/>;
+          })}
+
+          {/* Score polygon */}
+          <path d={path} fill="rgba(167,139,250,0.12)" stroke="rgba(167,139,250,0.6)" strokeWidth="2"
+            style={{transition:"all 0.35s ease"}}/>
+
+          {/* Colored dots at score position */}
+          {DIMS.map((d,i)=>{
+            const r   = ((scores[d.id]||0)/10)*maxR;
+            const p   = pt(i,Math.max(r,5));
+            const has = scores[d.id]>0;
             return(
-              <g key={d.id} onClick={()=>setActive(active===d.id?null:d.id)} style={{cursor:"pointer"}}>
-                <circle cx={p.x} cy={p.y} r={active===d.id?7:5} fill={has?d.color:"rgba(255,255,255,0.2)"} stroke={active===d.id?"white":"none"} strokeWidth="1.5" style={{filter:active===d.id?`drop-shadow(0 0 5px ${d.color})`:"none",transition:"all 0.2s"}}/>
-                <text x={lp.x} y={lp.y} textAnchor="middle" dominantBaseline="middle" fontSize={active===d.id?14:11} fill={active===d.id?d.color:"rgba(255,255,255,0.45)"} style={{userSelect:"none",transition:"all 0.2s"}}>{d.emoji}</text>
-                {has&&<text x={p.x} y={p.y-9} textAnchor="middle" fontSize="7" fill={active===d.id?d.color:"rgba(255,255,255,0.3)"}>{scores[d.id]}</text>}
-              </g>
+              <circle key={d.id} cx={p.x} cy={p.y} r="5.5"
+                fill={has?d.color:"rgba(255,255,255,0.12)"}
+                stroke={has?`${d.color}88`:"rgba(255,255,255,0.2)"}
+                strokeWidth="1"
+                style={{transition:"all 0.3s ease"}}/>
             );
           })}
-          <text x={cx} y={cy-6} textAnchor="middle" fontSize="9" fill="rgba(255,255,255,0.2)" letterSpacing="1">TAP</text>
-          <text x={cx} y={cy+6} textAnchor="middle" fontSize="9" fill="rgba(255,255,255,0.2)" letterSpacing="1">TO SCORE</text>
+
+          {/* Center hint */}
+          <text x={cx} y={cy-4} textAnchor="middle" fontSize="7" fill="rgba(255,255,255,0.12)" letterSpacing="0.5">TAP NUMBER</text>
+          <text x={cx} y={cy+8} textAnchor="middle" fontSize="7" fill="rgba(255,255,255,0.12)" letterSpacing="0.5">TO SCORE</text>
         </svg>
+
+        {/* HTML overlays for score nodes + labels */}
+        {DIMS.map((d,i)=>{
+          const a    = angle(i);
+          const cosA = Math.cos(a);
+          const sinA = Math.sin(a);
+
+          // Score number position (on ring edge)
+          const sp   = pt(i, SCORE_R);
+          const spX  = (sp.x/SVG)*100;
+          const spY  = (sp.y/SVG)*100;
+
+          // Label position (just outside score number, tighter)
+          const lp   = pt(i, LABEL_R);
+          const lpX  = (lp.x/SVG)*100;
+          const lpY  = (lp.y/SVG)*100;
+          const tx   = cosA < -0.2 ? "-100%" : cosA > 0.2 ? "0%" : "-50%";
+          const ty   = sinA < -0.2 ? "-100%" : sinA > 0.2 ? "0%" : "-50%";
+
+          return(
+            <React.Fragment key={d.id}>
+              {/* Score number node — interactive */}
+              <div style={{
+                position:"absolute",
+                left:`${spX}%`, top:`${spY}%`,
+                transform:"translate(-50%,-50%)",
+                zIndex:30,
+              }}>
+                <ScoreNode
+                  dim={d}
+                  score={scores[d.id]||0}
+                  onScore={onScore}
+                  tabIndex={i}
+                  totalDims={N}
+                />
+              </div>
+
+              {/* Dimension label rectangle — display only, tighter, text bigger */}
+              <div style={{
+                position:"absolute",
+                left:`${lpX}%`, top:`${lpY}%`,
+                transform:`translate(${tx},${ty})`,
+                zIndex:20,
+                pointerEvents:"none",
+              }}>
+                <div style={{
+                  borderRadius:12,
+                  background:`linear-gradient(150deg,${d.color}ee,${d.color}aa)`,
+                  boxShadow:`0 2px 10px ${d.color}44`,
+                  padding:"4px 8px",
+                  display:"flex",alignItems:"center",gap:"5px",
+                  whiteSpace:"nowrap",
+                  position:"relative",overflow:"hidden",
+                }}>
+                  {/* Shine */}
+                  <div style={{position:"absolute",top:0,left:0,right:0,height:"50%",background:"rgba(255,255,255,0.1)",borderRadius:"12px 12px 60% 60%",pointerEvents:"none"}}/>
+                  <span style={{fontSize:"1.2rem",lineHeight:1,flexShrink:0,position:"relative",zIndex:1}}>{d.emoji}</span>
+                  <span style={{fontSize:"0.75rem",fontWeight:"700",color:"white",lineHeight:1.15,position:"relative",zIndex:1}}>{d.label}</span>
+                </div>
+              </div>
+            </React.Fragment>
+          );
+        })}
       </div>
-      {active&&(()=>{
-        const dim=DIMS.find(d=>d.id===active);
-        return(
-          <div style={{borderRadius:14,padding:"0.8rem 1rem",background:`linear-gradient(135deg,${dim.color}18,rgba(10,10,20,0.97))`,border:`1px solid ${dim.color}40`,marginBottom:"0.5rem",animation:"slideUp 0.2s ease"}}>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"0.6rem"}}>
-              <div style={{display:"flex",alignItems:"center",gap:"0.4rem"}}>
-                <span style={{fontSize:"1rem"}}>{dim.emoji}</span>
-                <span style={{fontSize:"0.78rem",fontWeight:"700",color:"white"}}>{dim.label}</span>
-              </div>
-              <div style={{display:"flex",alignItems:"center",gap:"0.5rem"}}>
-                <span style={{fontFamily:"'Playfair Display',serif",fontSize:"1.4rem",fontWeight:"900",color:dim.color}}>{scores[dim.id]||"–"}</span>
-                <button onClick={()=>setActive(null)} style={{background:"rgba(255,255,255,0.08)",border:"none",borderRadius:"50%",width:22,height:22,color:"rgba(255,255,255,0.4)",cursor:"pointer",fontSize:"0.7rem"}}>✕</button>
-              </div>
-            </div>
-            <div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:6}}>
-              {[1,2,3,4,5,6,7,8,9,10].map(n=>(
-                <button key={n} onClick={()=>{onScore(dim.id,n);setActive(null);}} style={{height:34,borderRadius:8,background:n===scores[dim.id]?dim.color:"rgba(255,255,255,0.07)",border:n===scores[dim.id]?"none":"1px solid rgba(255,255,255,0.12)",color:n===scores[dim.id]?"white":"rgba(255,255,255,0.55)",fontWeight:n===scores[dim.id]?"800":"500",fontSize:"0.82rem",cursor:"pointer",fontFamily:"'Playfair Display',serif",transition:"all 0.12s"}}>{n}</button>
-              ))}
-            </div>
-          </div>
-        );
-      })()}
-      <div style={{display:"flex",flexWrap:"wrap",gap:"0.35rem"}}>
-        {DIMS.map(d=>(
-          <button key={d.id} onClick={()=>setActive(active===d.id?null:d.id)} style={{padding:"0.25rem 0.55rem",borderRadius:20,background:active===d.id?`${d.color}25`:"rgba(255,255,255,0.04)",border:active===d.id?`1px solid ${d.color}60`:"1px solid rgba(255,255,255,0.08)",color:active===d.id?d.color:"rgba(255,255,255,0.4)",fontSize:"0.6rem",cursor:"pointer",transition:"all 0.15s",display:"flex",alignItems:"center",gap:"0.3rem"}}>
-            <span>{d.emoji}</span>
-            <span style={{fontFamily:"'Playfair Display',serif",fontWeight:"700"}}>{scores[d.id]||"–"}</span>
-          </button>
-        ))}
+
+      <div style={{textAlign:"center",marginTop:"0.4rem",fontSize:"0.48rem",color:"rgba(255,255,255,0.2)",fontStyle:"italic"}}>
+        Tap a score number · − + or keyboard · Tab → clockwise
       </div>
     </div>
   );
 }
 
 // ── Compass View ──────────────────────────────────────────────────────────────
-function CompassView({scores}) {
+function CompassView({scores}){
   const [open,setOpen]=useState("mission");
-  const Sec=({id,label,children})=>(
-    <div style={{marginBottom:"0.55rem"}}>
-      <button onClick={()=>setOpen(open===id?null:id)} style={{width:"100%",display:"flex",justifyContent:"space-between",alignItems:"center",padding:"0.6rem 0.9rem",borderRadius:12,background:open===id?"rgba(167,139,250,0.15)":"rgba(255,255,255,0.04)",border:open===id?"1px solid rgba(167,139,250,0.38)":"1px solid rgba(255,255,255,0.08)",color:"white",cursor:"pointer",transition:"all 0.15s"}}>
-        <span style={{fontSize:"0.72rem",fontWeight:"700"}}>{label}</span>
-        <span style={{fontSize:"0.65rem",color:"rgba(255,255,255,0.3)"}}>{open===id?"▲":"▼"}</span>
-      </button>
-      {open===id&&<div style={{padding:"0.7rem 0.2rem 0.2rem",animation:"slideUp 0.2s ease"}}>{children}</div>}
-    </div>
-  );
-  return (
-    <div style={{animation:"fadeIn 0.3s ease"}}>
-      <Sec id="mission" label="◈ Mission">
-        <div style={{padding:"0.9rem",borderRadius:14,background:"linear-gradient(135deg,#1a1035,#0e0e20)",border:"1px solid rgba(167,139,250,0.25)"}}>
-          <div style={{fontSize:"0.45rem",color:"rgba(167,139,250,0.8)",letterSpacing:"0.14em",textTransform:"uppercase",fontWeight:"700",marginBottom:"0.35rem"}}>My Mission</div>
-          <div style={{fontSize:"0.76rem",color:"rgba(255,255,255,0.85)",lineHeight:"1.6",fontStyle:"italic"}}>"{MISSION}"</div>
-        </div>
-      </Sec>
-      <Sec id="vision" label="◎ Vision">
-        <div style={{padding:"0.9rem",borderRadius:14,background:"linear-gradient(135deg,#0a1a35,#060e20)",border:"1px solid rgba(103,232,249,0.2)"}}>
-          <div style={{fontSize:"0.45rem",color:"rgba(103,232,249,0.8)",letterSpacing:"0.14em",textTransform:"uppercase",fontWeight:"700",marginBottom:"0.35rem"}}>My Vision</div>
-          <div style={{fontSize:"0.72rem",color:"rgba(255,255,255,0.75)",lineHeight:"1.65",fontStyle:"italic"}}>"{VISION}"</div>
-        </div>
-      </Sec>
-      <Sec id="values" label="♦ Values">
-        <div style={{display:"flex",flexWrap:"wrap",gap:"0.4rem"}}>
-          {VALUES.map((v,i)=>(
-            <div key={i} style={{padding:"0.32rem 0.75rem",borderRadius:20,background:`hsl(${i*45},35%,18%)`,border:`1px solid hsl(${i*45},45%,32%)`,fontSize:"0.62rem",fontWeight:"600",color:`hsl(${i*45},65%,72%)`}}>{v}</div>
-          ))}
-        </div>
-      </Sec>
-      <Sec id="goals" label="◆ Goals by Dimension">
-        <div style={{display:"flex",flexDirection:"column",gap:"0.38rem"}}>
-          {DIMS.map(dim=>(
-            <div key={dim.id} style={{display:"flex",alignItems:"center",gap:"0.65rem",padding:"0.45rem 0.65rem",borderRadius:10,background:`${dim.color}16`,border:`1px solid ${dim.color}28`}}>
-              <span style={{fontSize:"0.95rem",flexShrink:0}}>{dim.emoji}</span>
-              <div style={{flex:1}}>
-                <div style={{fontSize:"0.6rem",fontWeight:"700",color:dim.color,marginBottom:"1px"}}>{dim.label}</div>
-                <div style={{fontSize:"0.58rem",color:"rgba(255,255,255,0.52)"}}>{dim.goal}</div>
-              </div>
-              {scores[dim.id]>0&&<div style={{fontFamily:"'Playfair Display',serif",fontSize:"1rem",fontWeight:"900",color:dim.color,flexShrink:0}}>{scores[dim.id]}</div>}
-            </div>
-          ))}
-        </div>
-      </Sec>
-      <Sec id="habits" label="◷ Daily Habits">
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"0.38rem"}}>
-          {DAILY_HABITS.map((h,i)=>(
-            <div key={i} style={{display:"flex",alignItems:"center",gap:"0.4rem",padding:"0.42rem 0.55rem",borderRadius:9,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.07)"}}>
-              <span style={{fontSize:"0.85rem"}}>{h.e}</span>
-              <span style={{fontSize:"0.57rem",color:"rgba(255,255,255,0.68)",lineHeight:1.3}}>{h.l}</span>
-            </div>
-          ))}
-        </div>
-      </Sec>
-      <Sec id="mentors" label="◉ Mentors">
-        <div style={{display:"flex",flexDirection:"column",gap:"0.32rem"}}>
-          {DIMS.filter(d=>d.mentor&&d.mentor!=="—").map(dim=>(
-            <div key={dim.id} style={{display:"flex",gap:"0.55rem",alignItems:"center",padding:"0.38rem 0.55rem",borderRadius:8,background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.06)"}}>
-              <span style={{fontSize:"0.85rem"}}>{dim.emoji}</span>
-              <div>
-                <div style={{fontSize:"0.57rem",fontWeight:"700",color:dim.color}}>{dim.label}</div>
-                <div style={{fontSize:"0.58rem",color:"rgba(255,255,255,0.48)"}}>{dim.mentor}</div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </Sec>
-      <Sec id="smart" label="◈ SMART Goals">
-        <div style={{display:"flex",flexWrap:"wrap",gap:"0.35rem"}}>
-          {SMART_GOALS.map((g,i)=>(
-            <div key={i} style={{padding:"0.28rem 0.65rem",borderRadius:20,background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.09)",fontSize:"0.58rem",color:"rgba(255,255,255,0.62)",fontWeight:"500"}}>{g}</div>
-          ))}
-        </div>
-      </Sec>
-    </div>
-  );
+  const Sec=({id,label,children})=>(<div style={{marginBottom:"0.55rem"}}><button onClick={()=>setOpen(open===id?null:id)} style={{width:"100%",display:"flex",justifyContent:"space-between",alignItems:"center",padding:"0.6rem 0.9rem",borderRadius:12,background:open===id?"rgba(167,139,250,0.15)":"rgba(255,255,255,0.04)",border:open===id?"1px solid rgba(167,139,250,0.38)":"1px solid rgba(255,255,255,0.08)",color:"white",cursor:"pointer",transition:"all 0.15s"}}><span style={{fontSize:"0.72rem",fontWeight:"700"}}>{label}</span><span style={{fontSize:"0.65rem",color:"rgba(255,255,255,0.3)"}}>{open===id?"▲":"▼"}</span></button>{open===id&&<div style={{padding:"0.7rem 0.2rem 0.2rem",animation:"slideUp 0.2s ease"}}>{children}</div>}</div>);
+  return(<div style={{animation:"fadeIn 0.3s ease"}}><Sec id="mission" label="◈ Mission"><div style={{padding:"0.9rem",borderRadius:14,background:"linear-gradient(135deg,#1a1035,#0e0e20)",border:"1px solid rgba(167,139,250,0.25)"}}><div style={{fontSize:"0.45rem",color:"rgba(167,139,250,0.8)",letterSpacing:"0.14em",textTransform:"uppercase",fontWeight:"700",marginBottom:"0.35rem"}}>My Mission</div><div style={{fontSize:"0.76rem",color:"rgba(255,255,255,0.85)",lineHeight:"1.6",fontStyle:"italic"}}>"{MISSION}"</div></div></Sec><Sec id="vision" label="◎ Vision"><div style={{padding:"0.9rem",borderRadius:14,background:"linear-gradient(135deg,#0a1a35,#060e20)",border:"1px solid rgba(103,232,249,0.2)"}}><div style={{fontSize:"0.45rem",color:"rgba(103,232,249,0.8)",letterSpacing:"0.14em",textTransform:"uppercase",fontWeight:"700",marginBottom:"0.35rem"}}>My Vision</div><div style={{fontSize:"0.72rem",color:"rgba(255,255,255,0.75)",lineHeight:"1.65",fontStyle:"italic"}}>"{VISION}"</div></div></Sec><Sec id="values" label="♦ Values"><div style={{display:"flex",flexWrap:"wrap",gap:"0.4rem"}}>{VALUES.map((v,i)=>(<div key={i} style={{padding:"0.32rem 0.75rem",borderRadius:20,background:`hsl(${i*45},35%,18%)`,border:`1px solid hsl(${i*45},45%,32%)`,fontSize:"0.62rem",fontWeight:"600",color:`hsl(${i*45},65%,72%)`}}>{v}</div>))}</div></Sec><Sec id="goals" label="◆ Goals by Dimension"><div style={{display:"flex",flexDirection:"column",gap:"0.38rem"}}>{DIMS.map(dim=>(<div key={dim.id} style={{display:"flex",alignItems:"center",gap:"0.65rem",padding:"0.45rem 0.65rem",borderRadius:10,background:`${dim.color}16`,border:`1px solid ${dim.color}28`}}><span style={{fontSize:"0.95rem",flexShrink:0}}>{dim.emoji}</span><div style={{flex:1}}><div style={{fontSize:"0.6rem",fontWeight:"700",color:dim.color}}>{dim.label}</div></div>{scores[dim.id]>0&&<div style={{fontFamily:"'Playfair Display',serif",fontSize:"1rem",fontWeight:"900",color:dim.color}}>{scores[dim.id]}</div>}</div>))}</div></Sec><Sec id="habits" label="◷ Daily Habits"><div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"0.38rem"}}>{DAILY_HABITS.map((h,i)=>(<div key={i} style={{display:"flex",alignItems:"center",gap:"0.4rem",padding:"0.42rem 0.55rem",borderRadius:9,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.07)"}}><span style={{fontSize:"0.85rem"}}>{h.e}</span><span style={{fontSize:"0.57rem",color:"rgba(255,255,255,0.68)",lineHeight:1.3}}>{h.l}</span></div>))}</div></Sec><Sec id="smart" label="◈ SMART Goals"><div style={{display:"flex",flexWrap:"wrap",gap:"0.35rem"}}>{SMART_GOALS.map((g,i)=>(<div key={i} style={{padding:"0.28rem 0.65rem",borderRadius:20,background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.09)",fontSize:"0.58rem",color:"rgba(255,255,255,0.62)",fontWeight:"500"}}>{g}</div>))}</div></Sec></div>);
 }
 
 // ── App ───────────────────────────────────────────────────────────────────────
-function App() {
+function App(){
   const [scores,setScores]=useState({});
   const [view,setView]=useState(getViewFromURL);
   const setScore=(id,val)=>setScores(s=>({...s,[id]:val}));
-  const handleView=(v)=>{setView(v);setURLView(v);};
-  useEffect(()=>{
-    const fn=()=>setView(getViewFromURL());
-    window.addEventListener("popstate",fn);
-    return()=>window.removeEventListener("popstate",fn);
-  },[]);
+  const handleView=v=>{setView(v);setURLView(v);};
+  useEffect(()=>{const fn=()=>setView(getViewFromURL());window.addEventListener("popstate",fn);return()=>window.removeEventListener("popstate",fn);},[]);
 
-  return (
+  return(
     <div style={{minHeight:"100vh",background:"#080810",fontFamily:"'DM Sans',sans-serif",color:"white"}}>
-      <div style={{maxWidth:420,margin:"0 auto",padding:"0.9rem 1rem 3rem"}}>
+      <div style={{maxWidth:480,margin:"0 auto",padding:"0.9rem 1rem 3rem"}}>
 
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"0.8rem"}}>
-          <h1 style={{fontFamily:"'Playfair Display',serif",fontSize:"1.55rem",fontWeight:"900",background:"linear-gradient(135deg,#e2d9f3,#a78bfa 50%,#67e8f9)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",letterSpacing:"-0.02em",lineHeight:1}}>Honor Your Life</h1>
+          <h1 style={{fontFamily:"'Cinzel',serif",fontSize:"1.4rem",fontWeight:"900",background:"linear-gradient(135deg,#e2d9f3,#a78bfa 50%,#67e8f9)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",letterSpacing:"0.04em",lineHeight:1}}>
+            Honor Your Life
+          </h1>
           <ViewToggle view={view} setView={handleView}/>
         </div>
 
         {view!=="compass"&&(
-          <div style={{borderRadius:14,padding:"0.6rem 0.85rem",background:"linear-gradient(135deg,#1a1035,#0e0e20)",border:"1px solid rgba(167,139,250,0.18)",marginBottom:"0.7rem",position:"relative",overflow:"hidden"}}>
+          <div style={{borderRadius:14,padding:"0.6rem 0.85rem",background:"linear-gradient(135deg,#1a1035,#0e0e20)",border:"1px solid rgba(167,139,250,0.18)",marginBottom:"1.6rem",position:"relative",overflow:"hidden"}}>
             <div style={{position:"absolute",top:-10,right:-10,width:50,height:50,borderRadius:"50%",background:"rgba(167,139,250,0.07)",pointerEvents:"none"}}/>
             <div style={{fontSize:"0.44rem",color:"rgba(167,139,250,0.7)",letterSpacing:"0.14em",textTransform:"uppercase",fontWeight:"700",marginBottom:"0.22rem"}}>◈ Mission</div>
             <div style={{fontSize:"0.63rem",color:"rgba(255,255,255,0.58)",lineHeight:"1.4",fontStyle:"italic",overflow:"hidden",display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical"}}>"{MISSION}"</div>
@@ -362,7 +350,7 @@ function App() {
         {view==="wheel"&&<WheelView scores={scores} onScore={setScore}/>}
         {view==="compass"&&<CompassView scores={scores}/>}
 
-        <div style={{marginTop:"1.5rem",textAlign:"center",fontSize:"0.53rem",color:"rgba(255,255,255,0.17)",lineHeight:"1.8",fontStyle:"italic"}}>
+        <div style={{marginTop:"1.8rem",textAlign:"center",fontSize:"0.53rem",color:"rgba(255,255,255,0.17)",lineHeight:"1.9",fontStyle:"italic"}}>
           This app is a compass, not a destination. Put it down often.<br/>
           A little better than an hour ago is a massive win.
         </div>
