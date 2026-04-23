@@ -320,9 +320,18 @@ function CompassView({scores}){
 }
 
 // ── App ───────────────────────────────────────────────────────────────────────
+const STORAGE_KEY="hyl_scores_v1";
+
 function App(){
-  const [scores,setScores]=useState({});
+  const [scores,setScores]=useState(()=>{
+    try{const s=localStorage.getItem(STORAGE_KEY);return s?JSON.parse(s):{};}
+    catch(e){return{};}
+  });
   const [view,setView]=useState(getViewFromURL);
+  useEffect(()=>{
+    try{localStorage.setItem(STORAGE_KEY,JSON.stringify(scores));}
+    catch(e){}
+  },[scores]);
   const setScore=(id,val)=>setScores(s=>({...s,[id]:val}));
   const handleView=v=>{setView(v);setURLView(v);};
   useEffect(()=>{const fn=()=>setView(getViewFromURL());window.addEventListener("popstate",fn);return()=>window.removeEventListener("popstate",fn);},[]);
