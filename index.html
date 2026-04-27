@@ -2,9 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
   <meta name="theme-color" content="#080810"/>
-<meta name='impact-site-verification' value='007a1934-3911-4b6d-925c-42c97e625792'>
   <title>Honor Your Life</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Playfair+Display:wght@700;800;900&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -13,115 +12,321 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
   <style>
     *{box-sizing:border-box;margin:0;padding:0;}
-    body{background:#080810;font-family:'DM Sans',sans-serif;color:white;overflow-x:hidden;}
-    button{font-family:inherit;}
+    html,body{height:100%;background:#080810;overflow:hidden;}
+    body{font-family:'DM Sans',sans-serif;color:white;}
+    button{font-family:inherit;cursor:pointer;}
+    input,textarea{font-family:inherit;}
     input::-webkit-inner-spin-button,input::-webkit-outer-spin-button{-webkit-appearance:none;}
     input[type=number]{-moz-appearance:textfield;}
     @keyframes fadeIn{from{opacity:0}to{opacity:1}}
-    @keyframes slideUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-    @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.6}}
-    .editable-field:focus{outline:2px solid rgba(167,139,250,0.6);outline-offset:2px;}
-    textarea{resize:none;font-family:'DM Sans',sans-serif;}
+    @keyframes slideUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes slideDown{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+    ::-webkit-scrollbar{width:3px;}
+    ::-webkit-scrollbar-track{background:transparent;}
+    ::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.15);border-radius:3px;}
   </style>
 </head>
 <body>
 <div id="root"></div>
 <script type="text/babel">
-const { useState, useEffect, useRef, useCallback } = React;
+const { useState, useEffect, useRef, useCallback, useMemo } = React;
 
-// ── Default Data ──────────────────────────────────────────────────────────────
-const DEFAULT_MISSION = "I create a world of love and abundance, by being confident, taking risks, and never giving up.";
-const DEFAULT_VISION  = "I am a polylingual adventurer, joyfully engaged physically and spiritually with the natural world. I live strenuously, advancing in intellect and physical skills as a way of life. I am a global expert in economic and financial modeling. I am loved and respected by my family and my community.";
-const DEFAULT_VALUES  = ["Community","Integrity","Service","Inclusivity","Leadership","Accountability","Emotional Intelligence","Continuous Growth"];
+const STORAGE_SCORES="hyl_scores_v1",STORAGE_COMPASS="hyl_compass_v2",STORAGE_ACTION="hyl_nra_v1",STORAGE_ACTIONS="hyl_actions_v1";
 
-const ALL_VALUES_LIBRARY = [
-  "Abundance","Accountability","Achievement","Adventure","Authenticity","Balance","Belonging",
-  "Bravery","Calm","Charity","Citizenship","Clarity","Commitment","Community","Compassion",
-  "Connection","Contribution","Courage","Creativity","Curiosity","Dedication","Dignity",
-  "Discipline","Empathy","Emotional Intelligence","Equality","Excellence","Fairness","Faith",
-  "Family","Flow","Focus","Forgiveness","Freedom","Generosity","Gratitude","Growth",
-  "Harmony","Honesty","Honor","Hope","Humility","Humor","Inclusivity","Integrity",
-  "Joy","Justice","Kindness","Leadership","Legacy","Love","Loyalty","Mastery",
-  "Meaning","Mindfulness","Nature","Openness","Optimism","Order","Patience","Peace",
-  "Perseverance","Play","Power","Purpose","Resilience","Respect","Responsibility",
-  "Security","Self-Reliance","Service","Simplicity","Spiritual Growth","Strength",
-  "Sustainability","Tolerance","Trust","Truth","Unity","Vision","Vulnerability","Wisdom"
+const DIMS=[
+  {id:1,label:"Inner Life",sub:"Spirituality",emoji:"✨",color:"#6D3FC8"},
+  {id:2,label:"Mental Health",sub:"Wellbeing",emoji:"🧠",color:"#0C7EA0"},
+  {id:3,label:"Community",sub:"Service",emoji:"🌍",color:"#0A6B4A"},
+  {id:4,label:"Body",sub:"Health & Fitness",emoji:"💪",color:"#A01830"},
+  {id:5,label:"Relationships",sub:"Friends & Family",emoji:"❤️",color:"#B45309"},
+  {id:6,label:"Environment",sub:"Home & Work",emoji:"🏡",color:"#1D4ED8"},
+  {id:7,label:"Play",sub:"Fun & Rest",emoji:"🎉",color:"#0D7A6E"},
+  {id:8,label:"Money",sub:"Financial",emoji:"💰",color:"#3D6B0A"},
+  {id:9,label:"Vocation",sub:"Career & Learning",emoji:"🚀",color:"#3730A3"},
+  {id:10,label:"Intimacy",sub:"Relationship",emoji:"🌹",color:"#9D174D"},
+  {id:11,label:"Time Wealth",sub:"Who Owns Your Hours",emoji:"⏳",color:"#92400E"},
+  {id:12,label:"Repair",sub:"Reconciliation",emoji:"🤝",color:"#134E4A"},
 ];
 
-const DIMS = [
-  { id:1,  label:"Inner Life",    sub:"Spirituality",        emoji:"✨", color:"#6D3FC8" },
-  { id:2,  label:"Mental Health", sub:"Wellbeing",           emoji:"🧠", color:"#0C7EA0" },
-  { id:3,  label:"Community",     sub:"Service",             emoji:"🌍", color:"#0A6B4A" },
-  { id:4,  label:"Body",          sub:"Health & Fitness",    emoji:"💪", color:"#A01830" },
-  { id:5,  label:"Relationships", sub:"Friends & Family",    emoji:"❤️", color:"#B45309" },
-  { id:6,  label:"Environment",   sub:"Home & Work",         emoji:"🏡", color:"#1D4ED8" },
-  { id:7,  label:"Play",          sub:"Fun & Rest",          emoji:"🎉", color:"#0D7A6E" },
-  { id:8,  label:"Money",         sub:"Financial",           emoji:"💰", color:"#3D6B0A" },
-  { id:9,  label:"Vocation",      sub:"Career & Learning",   emoji:"🚀", color:"#3730A3" },
-  { id:10, label:"Intimacy",      sub:"Relationship",        emoji:"🌹", color:"#9D174D" },
-  { id:11, label:"Time Wealth",   sub:"Who Owns Your Hours", emoji:"⏳", color:"#92400E" },
-  { id:12, label:"Repair",        sub:"Reconciliation",      emoji:"🤝", color:"#134E4A" },
+const DEFAULT_MISSION="I create a world of love and abundance, by being confident, taking risks, and never giving up.";
+const DEFAULT_VISION="I am a polylingual adventurer, joyfully engaged physically and spiritually with the natural world. I live strenuously, advancing in intellect and physical skills as a way of life. I am a global expert in economic and financial modeling. I am loved and respected by my family and my community.";
+const DEFAULT_VALUES=["Accountability","Adventure","Community","Continuous Growth","Creativity","Emotional Intelligence","Excellence","Family","Health","Independence","Inclusivity","Integrity","Knowledge","Leadership","Purpose","Service"];
+const ALL_VALUES=["Abundance","Accountability","Achievement","Adventure","Authenticity","Balance","Belonging","Bravery","Calm","Clarity","Commitment","Community","Compassion","Connection","Contribution","Courage","Creativity","Curiosity","Dedication","Dignity","Discipline","Empathy","Emotional Intelligence","Equality","Excellence","Fairness","Faith","Family","Flow","Focus","Forgiveness","Freedom","Generosity","Gratitude","Growth","Harmony","Health","Honesty","Honor","Hope","Humility","Humor","Inclusivity","Independence","Integrity","Joy","Justice","Kindness","Knowledge","Leadership","Legacy","Love","Loyalty","Mastery","Meaning","Mindfulness","Nature","Openness","Optimism","Order","Patience","Peace","Perseverance","Play","Purpose","Resilience","Respect","Responsibility","Security","Service","Simplicity","Strength","Sustainability","Tolerance","Trust","Truth","Unity","Vision","Vulnerability","Wisdom"];
+const DEFAULT_HABITS=[{e:"🧘",l:"Meditate 10 min"},{e:"📅",l:"Calendar review"},{e:"🌱",l:"Good deed"},{e:"🏃",l:"Move outside 60 min"},{e:"🕯️",l:"Examen / 11th Step"},{e:"🇪🇸",l:"Spanish practice"},{e:"📝",l:"Next day list"},{e:"⏱️",l:"Record time"},{e:"✍️",l:"Write 60 min"},{e:"👦",l:"Time with Milo"},{e:"💳",l:"Record spending"},{e:"💪",l:"Strength training"}];
+const DEFAULT_ACTIONS_LIST=[
+  {id:1,text:"Call someone. Not text. Call.",dim:5,status:"active"},
+  {id:2,text:"Write your net worth number by hand.",dim:8,status:"active"},
+  {id:3,text:"Sit in silence 10 minutes. No agenda.",dim:1,status:"active"},
+  {id:4,text:"Schedule the checkup you've been avoiding.",dim:4,status:"active"},
+  {id:5,text:"Remove one thing from your space.",dim:6,status:"active"},
+  {id:6,text:"Name one person you owe something.",dim:12,status:"active"},
+  {id:7,text:"Commit index.html to GitHub.",dim:9,status:"active"},
+  {id:8,text:"Apply to Bookshop.org affiliate.",dim:8,status:"active"},
+  {id:9,text:"Do one thing purely for joy today.",dim:7,status:"active"},
+  {id:10,text:"Track the hours you controlled today.",dim:11,status:"active"},
+  {id:11,text:"Find a volunteer shift this week.",dim:3,status:"active"},
+  {id:12,text:"Have one honest conversation.",dim:10,status:"active"},
 ];
 
-const DEFAULT_HABITS = [
-  {e:"🧘",l:"Meditate 10 min"},{e:"📅",l:"Calendar review"},{e:"🌱",l:"Good deed"},
-  {e:"🏃",l:"Move outside 60 min"},{e:"🕯️",l:"Examen / 11th Step"},{e:"🇪🇸",l:"Spanish practice"},
-  {e:"📝",l:"Next day list"},{e:"⏱️",l:"Record time"},{e:"✍️",l:"Write 60 min"},
-  {e:"👦",l:"Time with Milo"},{e:"💳",l:"Record spending"},{e:"💪",l:"Strength training"}
-];
+const load=(key,def)=>{try{const v=localStorage.getItem(key);return v?JSON.parse(v):def;}catch{return def;}};
+const save=(key,val)=>{try{localStorage.setItem(key,JSON.stringify(val));}catch{}};
 
-const DEFAULT_MENTORS = [
-  {e:"📖",l:"Jim Collins"},{e:"⏱️",l:"Tim Ferriss"},{e:"🧭",l:"Naval Ravikant"},
-  {e:"💰",l:"Paula Pant"},{e:"🧠",l:"Brené Brown"},{e:"🌿",l:"Henry Shukman"},
-  {e:"🏋️",l:"Mark Divine"},{e:"📚",l:"Ryan Holiday"},{e:"🎯",l:"Seth Godin"},
-  {e:"💡",l:"Lisa Swihart"},{e:"🌍",l:"bell hooks"},{e:"🔑",l:"Viktor Frankl"}
-];
-
-const DEFAULT_TASKS = [
-  {e:"💰",l:"MRI bill — call Regence",dim:2},{e:"🏡",l:"Respond to real estate agent",dim:6},
-  {e:"🚀",l:"Apply to Monarch Money affiliate",dim:8},{e:"📝",l:"Commit index.html to GitHub",dim:9},
-  {e:"🧘",l:"Schedule Vipassana dates",dim:1},{e:"💪",l:"Book fitness assessment",dim:4},
-  {e:"❤️",l:"Call someone — not text",dim:5},{e:"🤝",l:"Write the letter by hand",dim:12},
-  {e:"⏳",l:"Track hours controlled today",dim:11},{e:"🌍",l:"Find volunteer shift",dim:3},
-  {e:"🌹",l:"Plan one honest conversation",dim:10},{e:"🏡",l:"Clean one bathroom",dim:6}
-];
-
-const DEFAULT_SMART_GOALS = [
-  {goal:"Financially Independent",measure:"Net worth target reached",due:"2030-01-01",dim:8},
-  {goal:"Maritime Officer + Business Owner",measure:"Captain's license + first client",due:"2027-06-01",dim:9},
-  {goal:"Loving Father",measure:"Weekly quality time logged",due:"2025-12-31",dim:5},
-  {goal:"Strong & Agile",measure:"Run 5K under 25 min",due:"2025-09-01",dim:4},
-  {goal:"Spanish Speaker",measure:"B2 level test passed",due:"2026-12-31",dim:9},
-  {goal:"Loving Husband",measure:"Weekly connection ritual",due:"2025-12-31",dim:10},
-  {goal:"TSL Leader",measure:"Complete TSL certification",due:"2026-06-01",dim:3},
-  {goal:"MKP Leader",measure:"Lead one NWTA",due:"2026-12-01",dim:1},
-  {goal:"Vipassana",measure:"Complete 10-day retreat",due:"2026-03-01",dim:1},
-  {goal:"Hoffman Process",measure:"Register + attend",due:"2026-06-01",dim:12},
-  {goal:"Writer",measure:"Publish 12 essays",due:"2026-12-31",dim:9},
-  {goal:"ADHD Mastery",measure:"Daily system working 90 days",due:"2025-10-01",dim:2},
-];
-
-// ── URL routing ───────────────────────────────────────────────────────────────
-function getViewFromURL(){const p=window.location.pathname.toLowerCase();if(p.includes("compass"))return"compass";if(p.includes("wheel"))return"wheel";return"list";}
-function setURLView(v){window.history.pushState({},"",{compass:"/compass",list:"/list",wheel:"/wheel"}[v]||"/list");}
-
-// ── Icons ─────────────────────────────────────────────────────────────────────
-function CompassIcon({size=26,active}){const c=size/2,r=size*0.42,s=active?"white":"rgba(255,255,255,0.45)";return(<svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}><circle cx={c} cy={c} r={r} fill="none" stroke={s} strokeWidth="1.8"/><line x1={c} y1={c-r} x2={c} y2={c-r*0.3} stroke={s} strokeWidth="1.5"/><line x1={c} y1={c+r*0.3} x2={c} y2={c+r} stroke={s} strokeWidth="1.5"/><line x1={c-r} y1={c} x2={c-r*0.3} y2={c} stroke={s} strokeWidth="1.5"/><line x1={c+r*0.3} y1={c} x2={c+r} y2={c} stroke={s} strokeWidth="1.5"/><text x={c} y={c-r+7} textAnchor="middle" fontSize="5.5" fill={s} fontWeight="800">N</text><polygon points={`${c},${c-r*0.52} ${c-3.5},${c+3} ${c+3.5},${c+3}`} fill={active?"#ef4444":"rgba(239,68,68,0.55)"}/><polygon points={`${c},${c+r*0.52} ${c-3.5},${c-3} ${c+3.5},${c-3}`} fill={s}/><circle cx={c} cy={c} r="2.5" fill={s}/></svg>);}
-function ListIcon({size=26,active}){const s=active?"white":"rgba(255,255,255,0.45)";const dots=[];for(let row=0;row<4;row++)for(let col=0;col<3;col++)dots.push(<circle key={`${row}-${col}`} cx={size*0.22+col*(size*0.28)} cy={size*0.15+row*(size*0.24)} r="2.8" fill={s}/>);return <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>{dots}</svg>;}
-function WheelIcon({size=26,active}){const c=size/2,r=size*0.42,s=active?"white":"rgba(255,255,255,0.45)";return(<svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}><circle cx={c} cy={c} r={r} fill="none" stroke={s} strokeWidth="1.8"/><circle cx={c} cy={c} r={r*0.62} fill="none" stroke={s} strokeWidth="1" strokeDasharray="2,2"/><circle cx={c} cy={c} r={r*0.28} fill="none" stroke={s} strokeWidth="1"/>{Array.from({length:12},(_,i)=>{const a=(i/12)*Math.PI*2-Math.PI/2;return<line key={i} x1={c} y1={c} x2={c+r*Math.cos(a)} y2={c+r*Math.sin(a)} stroke={s} strokeWidth="1.2"/>;})}<circle cx={c} cy={c} r="2.5" fill={s}/></svg>);}
-
-function ViewToggle({view,setView}){
-  return(<div style={{display:"flex",gap:"0.35rem"}}>{[{id:"compass",label:"Compass",Icon:CompassIcon},{id:"list",label:"List",Icon:ListIcon},{id:"wheel",label:"Wheel",Icon:WheelIcon}].map(({id,label,Icon})=>{const on=view===id;return(<button key={id} onClick={()=>setView(id)} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:"3px",padding:"0.35rem 0.4rem",borderRadius:10,background:on?"rgba(167,139,250,0.2)":"rgba(255,255,255,0.04)",border:on?"1px solid rgba(167,139,250,0.5)":"1px solid rgba(255,255,255,0.09)",cursor:"pointer",transition:"all 0.15s",minWidth:46}}><Icon size={24} active={on}/><span style={{fontSize:"0.4rem",letterSpacing:"0.09em",textTransform:"uppercase",color:on?"#c4b5fd":"rgba(255,255,255,0.3)",fontWeight:"700"}}>{label}</span></button>);})}</div>);
+function scheduleGCal(text,dimLabel){
+  const title=encodeURIComponent("Next Right Action: "+text);
+  const desc=encodeURIComponent("Honor Your Life — "+dimLabel+" dimension");
+  const now=new Date(),start=new Date(now.getTime()+30*60000),end=new Date(start.getTime()+30*60000);
+  const fmt=d=>d.toISOString().replace(/[-:]/g,"").split(".")[0]+"Z";
+  window.open(`https://calendar.google.com/calendar/r/eventedit?text=${title}&dates=${fmt(start)}/${fmt(end)}&details=${desc}`,"_blank");
 }
 
-// ── List View: 3 columns × 4 rows ─────────────────────────────────────────────
+// ── Icons ─────────────────────────────────────────────────────────────────────
+function HomeIcon({active}){const c=active?"white":"rgba(255,255,255,0.4)";return <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H5a1 1 0 01-1-1V9.5z" stroke={c} strokeWidth="1.8" fill={active?"rgba(167,139,250,0.2)":"none"}/><path d="M9 21V12h6v9" stroke={c} strokeWidth="1.8"/></svg>;}
+function SearchIconNav({active}){const c=active?"white":"rgba(255,255,255,0.4)";return <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke={c} strokeWidth="1.8"/><path d="M16.5 16.5L21 21" stroke={c} strokeWidth="1.8" strokeLinecap="round"/></svg>;}
+function LifeIcon({active}){const c=active?"white":"rgba(255,255,255,0.4)";return(<svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke={c} strokeWidth="1.8"/><circle cx="12" cy="12" r="5.5" stroke={c} strokeWidth="1" strokeDasharray="2 2"/>{Array.from({length:12},(_,i)=>{const a=(i/12)*Math.PI*2-Math.PI/2;return<line key={i} x1="12" y1="12" x2={(12+5.5*Math.cos(a)).toFixed(1)} y2={(12+5.5*Math.sin(a)).toFixed(1)} stroke={c} strokeWidth="0.8" strokeOpacity="0.6"/>;})} <circle cx="12" cy="12" r="1.5" fill={c}/></svg>);}
+
+// ── Action Bar ────────────────────────────────────────────────────────────────
+function ActionBar({nra,onDone,onExpand,expanded}){
+  const dim=DIMS.find(d=>d.id===nra.dim)||DIMS[0];
+  return(
+    <div onClick={onExpand} style={{background:`linear-gradient(135deg,${dim.color}e0,${dim.color}a0)`,borderRadius:expanded?"16px 16px 0 0":16,padding:"0.7rem 1rem",display:"flex",alignItems:"center",gap:"0.7rem",cursor:"pointer",position:"relative",overflow:"hidden",boxShadow:`0 -2px 20px ${dim.color}44`,transition:"border-radius 0.2s",marginBottom:expanded?0:"0.4rem"}}>
+      <div style={{position:"absolute",top:0,left:0,right:0,height:"50%",background:"rgba(255,255,255,0.08)",borderRadius:"16px 16px 60% 60%",pointerEvents:"none"}}/>
+      <span style={{fontSize:"1.3rem",flexShrink:0}}>{dim.emoji}</span>
+      <div style={{flex:1,minWidth:0}}>
+        <div style={{fontSize:"0.4rem",color:"rgba(255,255,255,0.6)",letterSpacing:"0.16em",textTransform:"uppercase",fontWeight:"800",marginBottom:"1px"}}>ACTION</div>
+        <div style={{fontSize:"0.75rem",fontWeight:"700",color:"white",lineHeight:1.3,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{nra.text}</div>
+      </div>
+      <div style={{display:"flex",gap:"0.4rem",flexShrink:0}} onClick={e=>e.stopPropagation()}>
+        <button onClick={onDone} style={{padding:"0.3rem 0.65rem",borderRadius:20,background:"rgba(34,197,94,0.3)",border:"1px solid rgba(34,197,94,0.6)",color:"#4ADE80",fontSize:"0.55rem",fontWeight:"800",letterSpacing:"0.06em"}}>✓ DONE</button>
+        <button onClick={()=>scheduleGCal(nra.text,dim.label)} style={{padding:"0.3rem 0.5rem",borderRadius:20,background:"rgba(255,255,255,0.12)",border:"1px solid rgba(255,255,255,0.2)",color:"white",fontSize:"0.65rem"}}>📅</button>
+      </div>
+      <div style={{fontSize:"0.6rem",color:"rgba(255,255,255,0.45)",flexShrink:0}}>{expanded?"▼":"▲"}</div>
+    </div>
+  );
+}
+
+function ActionExpanded({actions,scores,onSetNRA,onDone,onAdd}){
+  const [newText,setNewText]=useState("");
+  const [showAdd,setShowAdd]=useState(false);
+  const [sortBy,setSortBy]=useState("score");
+  const sorted=useMemo(()=>{
+    const active=actions.filter(a=>a.status!=="done");
+    if(sortBy==="score") return [...active].sort((a,b)=>(scores[a.dim]||0)-(scores[b.dim]||0));
+    if(sortBy==="dim")   return [...active].sort((a,b)=>a.dim-b.dim);
+    return active;
+  },[actions,scores,sortBy]);
+  const handleAdd=()=>{if(newText.trim()){onAdd(newText.trim());setNewText("");setShowAdd(false);}};
+  return(
+    <div style={{background:"#0F0F1A",border:"1px solid rgba(255,255,255,0.08)",borderTop:"none",borderRadius:"0 0 16px 16px",padding:"0.7rem 0.75rem",maxHeight:320,overflowY:"auto",animation:"slideDown 0.2s ease"}}>
+      <div style={{fontSize:"0.5rem",color:"rgba(255,255,255,0.28)",fontStyle:"italic",textAlign:"center",marginBottom:"0.55rem",lineHeight:1.6}}>
+        Read your Mission. What is your next right action?<br/>Say it out loud before you add it.
+      </div>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"0.45rem"}}>
+        <div style={{display:"flex",gap:"0.25rem"}}>
+          {[["score","Low Score ↑"],["dim","By Dim"],["recent","Recent"]].map(([v,l])=>(
+            <button key={v} onClick={()=>setSortBy(v)} style={{padding:"2px 7px",borderRadius:20,background:sortBy===v?"rgba(167,139,250,0.25)":"rgba(255,255,255,0.05)",border:sortBy===v?"1px solid rgba(167,139,250,0.5)":"1px solid rgba(255,255,255,0.07)",color:sortBy===v?"#c4b5fd":"rgba(255,255,255,0.3)",fontSize:"0.4rem",fontWeight:"700"}}>
+              {l}
+            </button>
+          ))}
+        </div>
+        <button onClick={()=>setShowAdd(o=>!o)} style={{padding:"2px 8px",borderRadius:20,background:"rgba(124,58,237,0.25)",border:"1px solid rgba(124,58,237,0.5)",color:"#a78bfa",fontSize:"0.4rem",fontWeight:"800",letterSpacing:"0.06em"}}>
+          {showAdd?"✕":"+ ADD"}
+        </button>
+      </div>
+      {showAdd&&(
+        <div style={{display:"flex",gap:"0.4rem",marginBottom:"0.45rem"}}>
+          <input value={newText} onChange={e=>setNewText(e.target.value)} onKeyDown={e=>e.key==="Enter"&&handleAdd()} placeholder="What is your next right action?" style={{flex:1,background:"rgba(255,255,255,0.07)",border:"1px solid rgba(255,255,255,0.14)",borderRadius:8,padding:"0.32rem 0.5rem",color:"white",fontSize:"0.6rem",outline:"none"}}/>
+          <button onClick={handleAdd} style={{padding:"0.32rem 0.7rem",borderRadius:8,background:"rgba(124,58,237,0.4)",border:"1px solid rgba(124,58,237,0.6)",color:"white",fontSize:"0.58rem",fontWeight:"700"}}>Add</button>
+        </div>
+      )}
+      <div style={{display:"flex",flexDirection:"column",gap:"0.28rem"}}>
+        {sorted.map(action=>{
+          const dim=DIMS.find(d=>d.id===action.dim)||DIMS[0];
+          return(
+            <div key={action.id} style={{display:"flex",alignItems:"center",gap:"0.45rem",padding:"0.38rem 0.5rem",borderRadius:10,background:`${dim.color}14`,border:`1px solid ${dim.color}28`}}>
+              <span style={{fontSize:"0.85rem",flexShrink:0}}>{dim.emoji}</span>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontSize:"0.56rem",color:"rgba(255,255,255,0.8)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{action.text}</div>
+                <div style={{fontSize:"0.38rem",color:dim.color,marginTop:"1px",fontWeight:"700"}}>{dim.label}{action.status==="scheduled"?" · SCHEDULED":""}</div>
+              </div>
+              <div style={{display:"flex",gap:"0.22rem",flexShrink:0}}>
+                <button onClick={()=>onSetNRA(action)} style={{padding:"2px 6px",borderRadius:6,background:"rgba(167,139,250,0.2)",border:"1px solid rgba(167,139,250,0.4)",color:"#c4b5fd",fontSize:"0.4rem",fontWeight:"700"}}>SET</button>
+                <button onClick={()=>onDone(action.id)} style={{padding:"2px 6px",borderRadius:6,background:"rgba(34,197,94,0.15)",border:"1px solid rgba(34,197,94,0.35)",color:"#4ADE80",fontSize:"0.4rem",fontWeight:"700"}}>✓</button>
+                <button onClick={()=>scheduleGCal(action.text,dim.label)} style={{padding:"2px 4px",borderRadius:6,background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.1)",color:"rgba(255,255,255,0.4)",fontSize:"0.55rem"}}>📅</button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ── Bottom Nav ────────────────────────────────────────────────────────────────
+function BottomNav({view,setView,onPlus}){
+  return(
+    <div style={{display:"flex",alignItems:"center",justifyContent:"space-around",padding:"0.4rem 0.5rem 0.3rem",background:"rgba(8,8,16,0.97)",borderTop:"1px solid rgba(255,255,255,0.06)"}}>
+      {[["home","Home",HomeIcon],["search","Search",SearchIconNav],["life","Life",LifeIcon]].map(([id,label,Icon],i)=>{
+        const on=view===id;
+        if(i===2) return(
+          <React.Fragment key="life-plus">
+            <button onClick={()=>setView("life")} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:"2px",background:"none",border:"none",padding:"0.2rem 0.8rem"}}>
+              <LifeIcon active={view==="life"}/>
+              <span style={{fontSize:"0.38rem",letterSpacing:"0.08em",textTransform:"uppercase",color:view==="life"?"white":"rgba(255,255,255,0.32)",fontWeight:"700"}}>Life</span>
+            </button>
+            <button onClick={onPlus} style={{background:"none",border:"none",padding:"0.1rem 0.5rem",display:"flex",flexDirection:"column",alignItems:"center",gap:"2px"}}>
+              <div style={{width:40,height:40,borderRadius:"50%",background:"linear-gradient(135deg,#7C3AED,#4F46E5)",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 4px 16px rgba(124,58,237,0.5)"}}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="white" strokeWidth="2.2" strokeLinecap="round"/></svg>
+              </div>
+              <span style={{fontSize:"0.38rem",letterSpacing:"0.08em",textTransform:"uppercase",color:"rgba(255,255,255,0.32)",fontWeight:"700"}}>Add</span>
+            </button>
+          </React.Fragment>
+        );
+        return(
+          <button key={id} onClick={()=>setView(id)} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:"2px",background:"none",border:"none",padding:"0.2rem 0.8rem"}}>
+            <Icon active={on}/>
+            <span style={{fontSize:"0.38rem",letterSpacing:"0.08em",textTransform:"uppercase",color:on?"white":"rgba(255,255,255,0.32)",fontWeight:"700"}}>{label}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+// ── Search ────────────────────────────────────────────────────────────────────
+function SearchView({actions,scores}){
+  const [q,setQ]=useState("");
+  const [filter,setFilter]=useState("all");
+  const inputRef=useRef(null);
+  useEffect(()=>{ setTimeout(()=>inputRef.current?.focus(),100); },[]);
+  const results=useMemo(()=>{
+    if(!q.trim()) return [];
+    const lq=q.toLowerCase(),out=[];
+    if(filter==="all"||filter==="actions") actions.filter(a=>a.text.toLowerCase().includes(lq)).forEach(a=>{const d=DIMS.find(x=>x.id===a.dim)||DIMS[0];out.push({type:"action",label:a.text,sub:d.label,color:d.color,emoji:d.emoji});});
+    if(filter==="all"||filter==="dimensions") DIMS.filter(d=>d.label.toLowerCase().includes(lq)).forEach(d=>out.push({type:"dimension",label:d.label,sub:d.sub,color:d.color,emoji:d.emoji}));
+    return out;
+  },[q,filter,actions]);
+  return(
+    <div style={{height:"100%",display:"flex",flexDirection:"column",padding:"0 1rem"}}>
+      <div style={{paddingTop:"0.75rem",paddingBottom:"0.5rem"}}>
+        <h2 style={{fontFamily:"'Cinzel',serif",fontSize:"1.1rem",fontWeight:"900",background:"linear-gradient(135deg,#e2d9f3,#a78bfa)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",marginBottom:"0.6rem"}}>Search</h2>
+        <div style={{position:"relative",marginBottom:"0.45rem"}}>
+          <input ref={inputRef} value={q} onChange={e=>setQ(e.target.value)} placeholder="Search actions, dimensions, goals..." style={{width:"100%",background:"rgba(255,255,255,0.07)",border:"1px solid rgba(255,255,255,0.12)",borderRadius:12,padding:"0.6rem 0.75rem 0.6rem 2.2rem",color:"white",fontSize:"0.7rem",outline:"none"}}/>
+          <span style={{position:"absolute",left:"0.65rem",top:"50%",transform:"translateY(-50%)",fontSize:"0.85rem",opacity:0.4}}>🔍</span>
+        </div>
+        <div style={{display:"flex",gap:"0.3rem",flexWrap:"wrap"}}>
+          {["all","actions","dimensions"].map(f=>(
+            <button key={f} onClick={()=>setFilter(f)} style={{padding:"2px 9px",borderRadius:20,background:filter===f?"rgba(167,139,250,0.25)":"rgba(255,255,255,0.05)",border:filter===f?"1px solid rgba(167,139,250,0.5)":"1px solid rgba(255,255,255,0.07)",color:filter===f?"#c4b5fd":"rgba(255,255,255,0.38)",fontSize:"0.42rem",fontWeight:"700",textTransform:"capitalize"}}>{f}</button>
+          ))}
+        </div>
+      </div>
+      <div style={{flex:1,overflowY:"auto",paddingBottom:"0.5rem"}}>
+        {q&&results.length===0&&<div style={{textAlign:"center",color:"rgba(255,255,255,0.2)",fontSize:"0.62rem",marginTop:"2rem"}}>No results for "{q}"</div>}
+        {!q&&<div style={{textAlign:"center",color:"rgba(255,255,255,0.18)",fontSize:"0.62rem",marginTop:"2rem",fontStyle:"italic"}}>Type to search your life inventory</div>}
+        <div style={{display:"flex",flexDirection:"column",gap:"0.32rem",marginTop:"0.2rem"}}>
+          {results.map((r,i)=>(
+            <div key={i} style={{display:"flex",alignItems:"center",gap:"0.6rem",padding:"0.5rem 0.65rem",borderRadius:12,background:`${r.color}14`,border:`1px solid ${r.color}28`,animation:"slideUp 0.15s ease"}}>
+              <span style={{fontSize:"1rem",flexShrink:0}}>{r.emoji}</span>
+              <div><div style={{fontSize:"0.65rem",fontWeight:"700",color:"rgba(255,255,255,0.88)"}}>{r.label}</div><div style={{fontSize:"0.42rem",color:r.color,marginTop:"1px",fontWeight:"600",textTransform:"uppercase",letterSpacing:"0.06em"}}>{r.type} · {r.sub}</div></div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Home ──────────────────────────────────────────────────────────────────────
+function EditBubble({label,value,onChange,accent,bg}){
+  const [editing,setEditing]=useState(false);
+  const [draft,setDraft]=useState(value);
+  const ta=useRef(null);
+  useEffect(()=>{ if(editing) ta.current?.focus(); },[editing]);
+  const save=()=>{ onChange(draft); setEditing(false); };
+  return(
+    <div style={{borderRadius:16,background:bg,border:`1.5px solid ${accent}28`,padding:"0.85rem 1rem",marginBottom:"0.55rem",position:"relative",overflow:"hidden"}}>
+      <div style={{position:"absolute",top:0,left:0,right:0,height:"40%",background:"rgba(255,255,255,0.04)",borderRadius:"16px 16px 60% 60%",pointerEvents:"none"}}/>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"0.4rem",position:"relative",zIndex:1}}>
+        <div style={{fontSize:"0.52rem",color:accent,letterSpacing:"0.14em",textTransform:"uppercase",fontWeight:"800"}}>{label}</div>
+        <button onClick={()=>editing?save():setEditing(true)} style={{padding:"2px 8px",borderRadius:20,background:editing?"rgba(34,197,94,0.3)":"rgba(255,255,255,0.07)",border:editing?"1px solid rgba(34,197,94,0.6)":"1px solid rgba(255,255,255,0.1)",color:editing?"#4ADE80":"rgba(255,255,255,0.45)",fontSize:"0.42rem",fontWeight:"700",textTransform:"uppercase"}}>
+          {editing?"✓ Save":"✏ Edit"}
+        </button>
+      </div>
+      {editing
+        ? <textarea ref={ta} value={draft} onChange={e=>setDraft(e.target.value)} rows={4} style={{width:"100%",background:"rgba(0,0,0,0.3)",border:"1px solid rgba(255,255,255,0.13)",borderRadius:10,color:"white",fontSize:"0.72rem",lineHeight:"1.6",padding:"0.5rem 0.6rem",position:"relative",zIndex:1,fontStyle:"italic",outline:"none",resize:"none"}}/>
+        : <div style={{fontSize:"0.72rem",color:"rgba(255,255,255,0.85)",lineHeight:"1.65",fontStyle:"italic",position:"relative",zIndex:1}}>
+            <span style={{color:accent,fontSize:"0.9rem"}}>"</span>{value}<span style={{color:accent,fontSize:"0.9rem"}}>"</span>
+          </div>
+      }
+      {!editing&&<div style={{marginTop:"0.5rem",padding:"0.38rem 0.6rem",borderRadius:10,background:`${accent}10`,border:`1px solid ${accent}18`,position:"relative",zIndex:1}}>
+        <div style={{fontSize:"0.5rem",color:"rgba(255,255,255,0.45)",fontStyle:"italic"}}>📢 Read this out loud. Right now. Not in your head.</div>
+      </div>}
+    </div>
+  );
+}
+
+function ValuesBubbles({values,onChange}){
+  const [showLib,setShowLib]=useState(false);
+  const [custom,setCustom]=useState("");
+  const remove=v=>onChange(values.filter(x=>x!==v));
+  const add=v=>{ if(!values.includes(v)) onChange([...values,v]); setShowLib(false); };
+  const addCustom=()=>{ const t=custom.trim(); if(t&&!values.includes(t)){onChange([...values,t]);setCustom("");} };
+  return(
+    <div style={{borderRadius:16,background:"linear-gradient(135deg,#1a1040,#0e0a28)",border:"1.5px solid rgba(139,92,246,0.22)",padding:"0.85rem 1rem",marginBottom:"0.55rem",position:"relative",overflow:"hidden"}}>
+      <div style={{position:"absolute",top:0,left:0,right:0,height:"40%",background:"rgba(255,255,255,0.03)",borderRadius:"16px 16px 60% 60%",pointerEvents:"none"}}/>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"0.6rem",position:"relative",zIndex:1}}>
+        <div style={{fontSize:"0.52rem",color:"rgba(139,92,246,0.9)",letterSpacing:"0.14em",textTransform:"uppercase",fontWeight:"800"}}>Values</div>
+        <button onClick={()=>setShowLib(o=>!o)} style={{padding:"2px 8px",borderRadius:20,background:"rgba(139,92,246,0.18)",border:"1px solid rgba(139,92,246,0.38)",color:"rgba(167,139,250,0.9)",fontSize:"0.42rem",fontWeight:"700",textTransform:"uppercase"}}>{showLib?"▲ Close":"+ Add"}</button>
+      </div>
+      <div style={{display:"flex",flexWrap:"wrap",gap:"0.32rem",position:"relative",zIndex:1}}>
+        {values.map((v,i)=>(
+          <div key={i} style={{display:"flex",alignItems:"center",gap:"4px",padding:"0.28rem 0.62rem",borderRadius:20,background:`hsl(${i*22},35%,18%)`,border:`1px solid hsl(${i*22},45%,32%)`,fontSize:"0.58rem",fontWeight:"600",color:`hsl(${i*22},65%,72%)`}}>
+            {v}<button onClick={()=>remove(v)} style={{background:"none",border:"none",color:`hsl(${i*22},65%,55%)`,fontSize:"0.75rem",lineHeight:1,padding:"0 0 0 2px"}}>×</button>
+          </div>
+        ))}
+      </div>
+      {showLib&&(
+        <div style={{marginTop:"0.6rem",position:"relative",zIndex:1}}>
+          <div style={{display:"flex",flexWrap:"wrap",gap:"0.25rem",maxHeight:100,overflowY:"auto",marginBottom:"0.42rem"}}>
+            {ALL_VALUES.filter(v=>!values.includes(v)).map((v,i)=>(
+              <button key={i} onClick={()=>add(v)} style={{padding:"0.18rem 0.48rem",borderRadius:20,background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.09)",color:"rgba(255,255,255,0.48)",fontSize:"0.52rem"}}>{v}</button>
+            ))}
+          </div>
+          <div style={{display:"flex",gap:"0.38rem"}}>
+            <input value={custom} onChange={e=>setCustom(e.target.value)} onKeyDown={e=>e.key==="Enter"&&addCustom()} placeholder="Type your own..." style={{flex:1,background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.11)",borderRadius:8,padding:"0.28rem 0.48rem",color:"white",fontSize:"0.56rem",outline:"none"}}/>
+            <button onClick={addCustom} style={{padding:"0.28rem 0.6rem",borderRadius:8,background:"rgba(139,92,246,0.28)",border:"1px solid rgba(139,92,246,0.48)",color:"rgba(167,139,250,0.9)",fontSize:"0.54rem",fontWeight:"700"}}>Add</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function HomeView({compassData,onChange}){
+  return(
+    <div style={{height:"100%",overflowY:"auto",padding:"0 1rem 1rem"}}>
+      <div style={{paddingTop:"0.75rem",marginBottom:"0.8rem"}}>
+        <h1 style={{fontFamily:"'Cinzel',serif",fontSize:"1.4rem",fontWeight:"900",background:"linear-gradient(135deg,#e2d9f3,#a78bfa 50%,#67e8f9)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",letterSpacing:"0.04em",lineHeight:1,marginBottom:"0.15rem"}}>Honor Your Life</h1>
+        <p style={{fontSize:"0.46rem",color:"rgba(255,255,255,0.22)",letterSpacing:"0.1em",textTransform:"uppercase"}}>Right Seeing. Right Action.</p>
+      </div>
+      <EditBubble label="Mission" value={compassData.mission} onChange={v=>onChange("mission",v)} accent="rgba(167,139,250,0.85)" bg="linear-gradient(135deg,#1a1035,#0e0e20)"/>
+      <EditBubble label="Vision"  value={compassData.vision}  onChange={v=>onChange("vision",v)}  accent="rgba(103,232,249,0.8)"  bg="linear-gradient(135deg,#0a1a35,#060e20)"/>
+      <ValuesBubbles values={compassData.values} onChange={v=>onChange("values",v)}/>
+      <div style={{marginTop:"0.5rem",textAlign:"center",fontSize:"0.5rem",color:"rgba(255,255,255,0.14)",lineHeight:"1.9",fontStyle:"italic"}}>
+        This app is a compass, not a destination. Put it down often.<br/>
+        A little better than an hour ago is a massive win.
+      </div>
+    </div>
+  );
+}
+
+// ── Life ──────────────────────────────────────────────────────────────────────
 function ScorePicker({score,onChange,color,onClose}){
   return(
-    <div onClick={e=>e.stopPropagation()} style={{position:"absolute",bottom:"calc(100% + 6px)",left:"50%",transform:"translateX(-50%)",background:"#1A1A2E",border:`1.5px solid ${color}`,borderRadius:14,padding:"0.55rem 0.6rem",zIndex:200,boxShadow:"0 8px 32px rgba(0,0,0,0.8)",width:180}}>
-      <div style={{fontSize:"0.44rem",color:"rgba(255,255,255,0.35)",letterSpacing:"0.12em",textTransform:"uppercase",textAlign:"center",marginBottom:"0.45rem"}}>Tap to score</div>
-      <div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:4}}>
+    <div onClick={e=>e.stopPropagation()} style={{position:"absolute",bottom:"calc(100% + 6px)",left:"50%",transform:"translateX(-50%)",background:"#1A1A2E",border:`1.5px solid ${color}`,borderRadius:14,padding:"0.52rem 0.58rem",zIndex:200,boxShadow:"0 8px 32px rgba(0,0,0,0.8)",width:175}}>
+      <div style={{fontSize:"0.42rem",color:"rgba(255,255,255,0.32)",letterSpacing:"0.12em",textTransform:"uppercase",textAlign:"center",marginBottom:"0.38rem"}}>Tap to score</div>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:3}}>
         {[1,2,3,4,5,6,7,8,9,10].map(n=>(
-          <button key={n} onClick={()=>{onChange(n);onClose();}} style={{height:28,borderRadius:7,background:n===score?color:"rgba(255,255,255,0.07)",border:n===score?"none":"1px solid rgba(255,255,255,0.1)",color:n===score?"white":"rgba(255,255,255,0.55)",fontWeight:n===score?"800":"500",fontSize:"0.75rem",cursor:"pointer",fontFamily:"'Playfair Display',serif",transition:"all 0.12s"}}>{n}</button>
+          <button key={n} onClick={()=>{onChange(n);onClose();}} style={{height:26,borderRadius:7,background:n===score?color:"rgba(255,255,255,0.06)",border:n===score?"none":"1px solid rgba(255,255,255,0.09)",color:n===score?"white":"rgba(255,255,255,0.52)",fontWeight:n===score?"800":"500",fontSize:"0.72rem",fontFamily:"'Playfair Display',serif"}}>{n}</button>
         ))}
       </div>
     </div>
@@ -130,32 +335,29 @@ function ScorePicker({score,onChange,color,onClose}){
 
 function DimCard({dim,score,onScore}){
   const [open,setOpen]=useState(false);
-  const has=score>0;
-  const H=96;
+  const has=score>0,H=90;
   return(
     <div style={{position:"relative"}}>
-      <div style={{borderRadius:16,background:`linear-gradient(150deg,${dim.color}f0 0%,${dim.color}b0 100%)`,height:H,padding:"0.6rem 0.65rem",boxShadow:`0 3px 16px ${dim.color}44`,position:"relative",overflow:"hidden",display:"flex",flexDirection:"column",justifyContent:"space-between"}}>
-        <div style={{position:"absolute",top:0,left:0,right:0,height:"45%",background:"rgba(255,255,255,0.09)",borderRadius:"16px 16px 50% 50%",pointerEvents:"none"}}/>
+      <div style={{borderRadius:14,background:`linear-gradient(150deg,${dim.color}f0,${dim.color}b0)`,height:H,padding:"0.52rem 0.58rem",boxShadow:`0 3px 14px ${dim.color}44`,position:"relative",overflow:"hidden",display:"flex",flexDirection:"column",justifyContent:"space-between"}}>
+        <div style={{position:"absolute",top:0,left:0,right:0,height:"45%",background:"rgba(255,255,255,0.09)",borderRadius:"14px 14px 50% 50%",pointerEvents:"none"}}/>
         <div style={{display:"flex",alignItems:"flex-start",position:"relative",zIndex:1}}>
-          <div style={{flex:1,paddingRight:"0.3rem"}}>
-            <div style={{fontSize:"1rem",lineHeight:1,marginBottom:"0.18rem"}}>{dim.emoji}</div>
-            <div style={{fontSize:"0.65rem",fontWeight:"700",color:"white",lineHeight:1.15}}>{dim.label}</div>
-            <div style={{fontSize:"0.48rem",color:"rgba(255,255,255,0.6)",marginTop:"1px"}}>{dim.sub}</div>
+          <div style={{flex:1}}>
+            <div style={{fontSize:"0.95rem",lineHeight:1,marginBottom:"0.15rem"}}>{dim.emoji}</div>
+            <div style={{fontSize:"0.58rem",fontWeight:"700",color:"white",lineHeight:1.15}}>{dim.label}</div>
+            <div style={{fontSize:"0.42rem",color:"rgba(255,255,255,0.58)",marginTop:"1px"}}>{dim.sub}</div>
           </div>
-          <div style={{width:"38%",display:"flex",alignItems:"center",justifyContent:"center"}}>
-            {has
-              ? <div style={{fontFamily:"'Playfair Display',serif",fontSize:`${H*0.55}px`,fontWeight:"900",color:"rgba(255,255,255,0.92)",lineHeight:1,letterSpacing:"-0.04em",textShadow:"0 2px 12px rgba(0,0,0,0.3)"}}>{score}</div>
-              : <div style={{fontFamily:"'Playfair Display',serif",fontSize:`${H*0.2}px`,fontWeight:"700",color:"rgba(255,255,255,0.25)",lineHeight:1}}>–</div>
-            }
+          <div style={{width:"36%",display:"flex",alignItems:"center",justifyContent:"center"}}>
+            {has?<div style={{fontFamily:"'Playfair Display',serif",fontSize:`${H*0.52}px`,fontWeight:"900",color:"rgba(255,255,255,0.92)",lineHeight:1,letterSpacing:"-0.04em"}}>{score}</div>
+                :<div style={{fontFamily:"'Playfair Display',serif",fontSize:`${H*0.18}px`,fontWeight:"700",color:"rgba(255,255,255,0.2)",lineHeight:1}}>–</div>}
           </div>
         </div>
         <div style={{position:"relative",zIndex:1}}>
-          <div style={{height:2,background:"rgba(255,255,255,0.18)",borderRadius:2}}>
-            <div style={{height:"100%",width:has?`${score*10}%`:"0%",background:"rgba(255,255,255,0.7)",borderRadius:2,transition:"width 0.35s ease"}}/>
+          <div style={{height:2,background:"rgba(255,255,255,0.16)",borderRadius:2}}>
+            <div style={{height:"100%",width:has?`${score*10}%`:"0%",background:"rgba(255,255,255,0.68)",borderRadius:2,transition:"width 0.35s ease"}}/>
           </div>
         </div>
-        <button onClick={e=>{e.stopPropagation();setOpen(o=>!o);}} style={{position:"absolute",top:6,right:6,padding:"2px 6px",borderRadius:20,background:has?"rgba(34,197,94,0.25)":"rgba(239,68,68,0.25)",border:has?"1px solid rgba(34,197,94,0.5)":"1px solid rgba(239,68,68,0.5)",color:has?"#4ADE80":"#FCA5A5",fontSize:"0.42rem",fontWeight:"800",letterSpacing:"0.06em",textTransform:"uppercase",cursor:"pointer",zIndex:2,display:"flex",alignItems:"center",gap:"2px"}}>
-          {has?<><span style={{fontSize:"0.6rem"}}>✓</span><span>Scored</span></>:<><span style={{fontSize:"0.5rem"}}>+</span><span>Score</span></>}
+        <button onClick={e=>{e.stopPropagation();setOpen(o=>!o);}} style={{position:"absolute",top:5,right:5,padding:"2px 5px",borderRadius:20,background:has?"rgba(34,197,94,0.22)":"rgba(239,68,68,0.22)",border:has?"1px solid rgba(34,197,94,0.48)":"1px solid rgba(239,68,68,0.48)",color:has?"#4ADE80":"#FCA5A5",fontSize:"0.38rem",fontWeight:"800",textTransform:"uppercase",zIndex:2}}>
+          {has?<><span style={{fontSize:"0.52rem"}}>✓</span> OK</>:<><span style={{fontSize:"0.45rem"}}>+</span>Score</>}
         </button>
       </div>
       {open&&<ScorePicker score={score} onChange={onScore} color={dim.color} onClose={()=>setOpen(false)}/>}
@@ -163,457 +365,161 @@ function DimCard({dim,score,onScore}){
   );
 }
 
-// ── Compass Components ────────────────────────────────────────────────────────
-
-// Editable text bubble (Mission / Vision)
-function EditableBubble({label, value, onChange, color, accentColor, italic}){
-  const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState(value);
-  const taRef = useRef(null);
-
-  useEffect(()=>{ if(editing && taRef.current){ taRef.current.focus(); taRef.current.select(); } },[editing]);
-
-  const save = () => { onChange(draft); setEditing(false); };
-
-  return(
-    <div style={{borderRadius:16,background:`linear-gradient(135deg,${color},${color}99)`,border:`1.5px solid ${accentColor}40`,padding:"0.85rem 1rem",position:"relative",overflow:"hidden",marginBottom:"0.55rem"}}>
-      {/* Shine */}
-      <div style={{position:"absolute",top:0,left:0,right:0,height:"40%",background:"rgba(255,255,255,0.07)",borderRadius:"16px 16px 60% 60%",pointerEvents:"none"}}/>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"0.4rem",position:"relative",zIndex:1}}>
-        <div style={{fontSize:"0.44rem",color:accentColor,letterSpacing:"0.14em",textTransform:"uppercase",fontWeight:"800"}}>{label}</div>
-        <button onClick={()=>editing?save():setEditing(true)} style={{padding:"2px 8px",borderRadius:20,background:editing?"rgba(34,197,94,0.3)":"rgba(255,255,255,0.12)",border:editing?"1px solid rgba(34,197,94,0.6)":"1px solid rgba(255,255,255,0.2)",color:editing?"#4ADE80":"rgba(255,255,255,0.6)",fontSize:"0.42rem",fontWeight:"700",letterSpacing:"0.06em",textTransform:"uppercase",cursor:"pointer"}}>
-          {editing?"✓ Save":"✏ Edit"}
-        </button>
-      </div>
-      {editing
-        ? <textarea
-            ref={taRef}
-            value={draft}
-            onChange={e=>setDraft(e.target.value)}
-            rows={4}
-            style={{width:"100%",background:"rgba(0,0,0,0.35)",border:"1px solid rgba(255,255,255,0.2)",borderRadius:10,color:"white",fontSize:"0.72rem",lineHeight:"1.6",padding:"0.5rem 0.6rem",position:"relative",zIndex:1,fontStyle:italic?"italic":"normal"}}
-          />
-        : <div style={{fontSize:"0.72rem",color:"rgba(255,255,255,0.88)",lineHeight:"1.65",fontStyle:italic?"italic":"normal",position:"relative",zIndex:1}}>
-            "{value}"
-          </div>
-      }
-    </div>
-  );
-}
-
-// Values bubbles with add/remove
-function ValuesBubbles({values, onChange}){
-  const [showLib, setShowLib] = useState(false);
-  const [custom, setCustom] = useState("");
-
-  const remove = (v) => onChange(values.filter(x=>x!==v));
-  const add    = (v) => { if(!values.includes(v)) onChange([...values, v]); setShowLib(false); };
-  const addCustom = () => { const t=custom.trim(); if(t&&!values.includes(t)){onChange([...values,t]);setCustom("");} };
-
-  return(
-    <div style={{borderRadius:16,background:"linear-gradient(135deg,#1a1040,#0e0a28)",border:"1.5px solid rgba(139,92,246,0.3)",padding:"0.85rem 1rem",marginBottom:"0.55rem",position:"relative",overflow:"hidden"}}>
-      <div style={{position:"absolute",top:0,left:0,right:0,height:"40%",background:"rgba(255,255,255,0.04)",borderRadius:"16px 16px 60% 60%",pointerEvents:"none"}}/>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"0.6rem",position:"relative",zIndex:1}}>
-        <div style={{fontSize:"0.44rem",color:"rgba(139,92,246,0.9)",letterSpacing:"0.14em",textTransform:"uppercase",fontWeight:"800"}}>Values</div>
-        <button onClick={()=>setShowLib(o=>!o)} style={{padding:"2px 8px",borderRadius:20,background:"rgba(139,92,246,0.2)",border:"1px solid rgba(139,92,246,0.4)",color:"rgba(167,139,250,0.9)",fontSize:"0.42rem",fontWeight:"700",letterSpacing:"0.06em",textTransform:"uppercase",cursor:"pointer"}}>
-          {showLib?"▲ Close":"+ Add"}
-        </button>
-      </div>
-      {/* Current values */}
-      <div style={{display:"flex",flexWrap:"wrap",gap:"0.35rem",position:"relative",zIndex:1}}>
-        {values.map((v,i)=>(
-          <div key={i} style={{display:"flex",alignItems:"center",gap:"4px",padding:"0.3rem 0.65rem",borderRadius:20,background:`hsl(${i*43},35%,18%)`,border:`1px solid hsl(${i*43},45%,32%)`,fontSize:"0.6rem",fontWeight:"600",color:`hsl(${i*43},65%,72%)`}}>
-            {v}
-            <button onClick={()=>remove(v)} style={{background:"none",border:"none",color:`hsl(${i*43},65%,55%)`,cursor:"pointer",fontSize:"0.7rem",lineHeight:1,padding:"0 0 0 2px"}}>×</button>
-          </div>
-        ))}
-      </div>
-      {/* Library picker */}
-      {showLib&&(
-        <div style={{marginTop:"0.7rem",animation:"slideUp 0.15s ease",position:"relative",zIndex:1}}>
-          <div style={{fontSize:"0.44rem",color:"rgba(255,255,255,0.3)",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:"0.4rem"}}>Choose from library</div>
-          <div style={{display:"flex",flexWrap:"wrap",gap:"0.3rem",maxHeight:120,overflowY:"auto",marginBottom:"0.5rem"}}>
-            {ALL_VALUES_LIBRARY.filter(v=>!values.includes(v)).map((v,i)=>(
-              <button key={i} onClick={()=>add(v)} style={{padding:"0.22rem 0.55rem",borderRadius:20,background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.12)",color:"rgba(255,255,255,0.55)",fontSize:"0.56rem",cursor:"pointer",fontWeight:"500",transition:"all 0.1s"}}>{v}</button>
-            ))}
-          </div>
-          <div style={{display:"flex",gap:"0.4rem"}}>
-            <input value={custom} onChange={e=>setCustom(e.target.value)} onKeyDown={e=>e.key==="Enter"&&addCustom()} placeholder="Or type your own..." style={{flex:1,background:"rgba(255,255,255,0.07)",border:"1px solid rgba(255,255,255,0.15)",borderRadius:8,padding:"0.3rem 0.5rem",color:"white",fontSize:"0.6rem"}}/>
-            <button onClick={addCustom} style={{padding:"0.3rem 0.65rem",borderRadius:8,background:"rgba(139,92,246,0.3)",border:"1px solid rgba(139,92,246,0.5)",color:"rgba(167,139,250,0.9)",fontSize:"0.56rem",cursor:"pointer",fontWeight:"700"}}>Add</button>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// Editable 3×4 grid (habits, mentors)
-function EditableGrid({items, onChange, label, accentColor, bgColor}){
-  const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState(items);
-
-  const updateItem = (i, field, val) => {
-    const next=[...draft];
-    next[i]={...next[i],[field]:val};
-    setDraft(next);
-  };
-  const save=()=>{onChange(draft);setEditing(false);};
-
-  const displayItems = editing ? draft : items;
-
-  return(
-    <div style={{borderRadius:16,background:bgColor||"linear-gradient(135deg,#0e1a10,#080e0a)",border:"1.5px solid rgba(255,255,255,0.08)",padding:"0.85rem 1rem",marginBottom:"0.55rem",position:"relative",overflow:"hidden"}}>
-      <div style={{position:"absolute",top:0,left:0,right:0,height:"40%",background:"rgba(255,255,255,0.03)",borderRadius:"16px 16px 60% 60%",pointerEvents:"none"}}/>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"0.6rem",position:"relative",zIndex:1}}>
-        <div style={{fontSize:"0.44rem",color:accentColor||"rgba(255,255,255,0.5)",letterSpacing:"0.14em",textTransform:"uppercase",fontWeight:"800"}}>{label}</div>
-        <button onClick={()=>editing?save():setEditing(true)} style={{padding:"2px 8px",borderRadius:20,background:editing?"rgba(34,197,94,0.3)":"rgba(255,255,255,0.08)",border:editing?"1px solid rgba(34,197,94,0.6)":"1px solid rgba(255,255,255,0.15)",color:editing?"#4ADE80":"rgba(255,255,255,0.5)",fontSize:"0.42rem",fontWeight:"700",letterSpacing:"0.06em",textTransform:"uppercase",cursor:"pointer"}}>
-          {editing?"✓ Save":"✏ Edit"}
-        </button>
-      </div>
-      <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:"0.35rem",position:"relative",zIndex:1}}>
-        {displayItems.slice(0,12).map((item,i)=>(
-          <div key={i} style={{display:"flex",alignItems:"center",gap:"0.3rem",padding:"0.38rem 0.45rem",borderRadius:10,background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.08)",minHeight:36}}>
-            {editing
-              ? <>
-                  <input value={item.e} onChange={e=>updateItem(i,"e",e.target.value)} style={{width:22,background:"none",border:"none",color:"white",fontSize:"0.85rem",padding:0,textAlign:"center"}} maxLength={2}/>
-                  <input value={item.l} onChange={e=>updateItem(i,"l",e.target.value)} style={{flex:1,background:"none",border:"none",color:"rgba(255,255,255,0.75)",fontSize:"0.5rem",padding:0,minWidth:0}}/>
-                </>
-              : <>
-                  <span style={{fontSize:"0.85rem",flexShrink:0}}>{item.e}</span>
-                  <span style={{fontSize:"0.5rem",color:"rgba(255,255,255,0.68)",lineHeight:1.25,overflow:"hidden"}}>{item.l}</span>
-                </>
-            }
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// Tasks grid with dimension badge
-function TasksGrid({tasks, onChange}){
-  const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState(tasks);
-
-  const updateItem=(i,field,val)=>{const n=[...draft];n[i]={...n[i],[field]:val};setDraft(n);};
-  const save=()=>{onChange(draft);setEditing(false);};
-  const getDim=(id)=>DIMS.find(d=>d.id===id)||DIMS[0];
-
-  return(
-    <div style={{borderRadius:16,background:"linear-gradient(135deg,#10100a,#0a0a06)",border:"1.5px solid rgba(251,191,36,0.15)",padding:"0.85rem 1rem",marginBottom:"0.55rem",position:"relative",overflow:"hidden"}}>
-      <div style={{position:"absolute",top:0,left:0,right:0,height:"40%",background:"rgba(255,255,255,0.03)",borderRadius:"16px 16px 60% 60%",pointerEvents:"none"}}/>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"0.45rem",position:"relative",zIndex:1}}>
-        <div>
-          <div style={{fontSize:"0.44rem",color:"rgba(251,191,36,0.8)",letterSpacing:"0.14em",textTransform:"uppercase",fontWeight:"800"}}>Tasks / Next Right Actions</div>
-          <div style={{fontSize:"0.4rem",color:"rgba(255,255,255,0.25)",marginTop:"2px"}}>Potential next steps — not prescriptions</div>
-        </div>
-        <button onClick={()=>editing?save():setEditing(true)} style={{padding:"2px 8px",borderRadius:20,background:editing?"rgba(34,197,94,0.3)":"rgba(255,255,255,0.08)",border:editing?"1px solid rgba(34,197,94,0.6)":"1px solid rgba(255,255,255,0.15)",color:editing?"#4ADE80":"rgba(255,255,255,0.5)",fontSize:"0.42rem",fontWeight:"700",letterSpacing:"0.06em",textTransform:"uppercase",cursor:"pointer"}}>
-          {editing?"✓ Save":"✏ Edit"}
-        </button>
-      </div>
-      <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:"0.35rem",position:"relative",zIndex:1}}>
-        {(editing?draft:tasks).slice(0,12).map((item,i)=>{
-          const dim=getDim(item.dim);
-          return(
-            <div key={i} style={{display:"flex",flexDirection:"column",gap:"3px",padding:"0.4rem 0.45rem",borderRadius:10,background:`${dim.color}18`,border:`1px solid ${dim.color}30`,minHeight:52,position:"relative"}}>
-              <div style={{fontSize:"0.38rem",color:dim.color,fontWeight:"800",letterSpacing:"0.06em",textTransform:"uppercase",lineHeight:1}}>{i+1}. {dim.label}</div>
-              {editing
-                ? <input value={item.l} onChange={e=>updateItem(i,"l",e.target.value)} style={{background:"none",border:"none",color:"rgba(255,255,255,0.8)",fontSize:"0.5rem",padding:0,width:"100%"}}/>
-                : <div style={{fontSize:"0.5rem",color:"rgba(255,255,255,0.78)",lineHeight:1.3}}>{item.e} {item.l}</div>
-              }
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-// SMART Goals
-function SmartGoals({goals, onChange}){
-  const [editing,setEditing]=useState(false);
-  const [draft,setDraft]=useState(goals);
-
-  const update=(i,field,val)=>{const n=[...draft];n[i]={...n[i],[field]:val};setDraft(n);};
-  const save=()=>{onChange(draft);setEditing(false);};
-  const getDim=(id)=>DIMS.find(d=>d.id===id)||DIMS[0];
-
-  return(
-    <div style={{borderRadius:16,background:"linear-gradient(135deg,#0e1218,#080c10)",border:"1.5px solid rgba(103,232,249,0.12)",padding:"0.85rem 1rem",marginBottom:"0.55rem",position:"relative",overflow:"hidden"}}>
-      <div style={{position:"absolute",top:0,left:0,right:0,height:"40%",background:"rgba(255,255,255,0.03)",borderRadius:"16px 16px 60% 60%",pointerEvents:"none"}}/>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"0.3rem",position:"relative",zIndex:1}}>
-        <div>
-          <div style={{fontSize:"0.44rem",color:"rgba(103,232,249,0.8)",letterSpacing:"0.14em",textTransform:"uppercase",fontWeight:"800"}}>SMART Goals</div>
-          <div style={{fontSize:"0.38rem",color:"rgba(255,255,255,0.25)",marginTop:"2px"}}>Specific · Measurable · Achievable · Relevant · Time-bound</div>
-        </div>
-        <button onClick={()=>editing?save():setEditing(true)} style={{padding:"2px 8px",borderRadius:20,background:editing?"rgba(34,197,94,0.3)":"rgba(255,255,255,0.08)",border:editing?"1px solid rgba(34,197,94,0.6)":"1px solid rgba(255,255,255,0.15)",color:editing?"#4ADE80":"rgba(255,255,255,0.5)",fontSize:"0.42rem",fontWeight:"700",letterSpacing:"0.06em",textTransform:"uppercase",cursor:"pointer"}}>
-          {editing?"✓ Save":"✏ Edit"}
-        </button>
-      </div>
-      <div style={{display:"flex",flexDirection:"column",gap:"0.32rem",position:"relative",zIndex:1}}>
-        {(editing?draft:goals).map((g,i)=>{
-          const dim=getDim(g.dim);
-          return(
-            <div key={i} style={{borderRadius:10,background:`${dim.color}14`,border:`1px solid ${dim.color}28`,padding:"0.45rem 0.6rem"}}>
-              {editing
-                ? <div style={{display:"flex",flexDirection:"column",gap:"4px"}}>
-                    <input value={g.goal} onChange={e=>update(i,"goal",e.target.value)} placeholder="Goal" style={{background:"none",border:"none",borderBottom:"1px solid rgba(255,255,255,0.15)",color:"white",fontSize:"0.62rem",fontWeight:"700",padding:"0 0 2px 0",width:"100%"}}/>
-                    <input value={g.measure} onChange={e=>update(i,"measure",e.target.value)} placeholder="How will you know? (Measure)" style={{background:"none",border:"none",borderBottom:"1px solid rgba(255,255,255,0.1)",color:"rgba(255,255,255,0.65)",fontSize:"0.52rem",padding:"0 0 2px 0",width:"100%"}}/>
-                    <div style={{display:"flex",alignItems:"center",gap:"0.5rem"}}>
-                      <span style={{fontSize:"0.44rem",color:"rgba(255,255,255,0.3)"}}>Due:</span>
-                      <input type="date" value={g.due} onChange={e=>update(i,"due",e.target.value)} style={{background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.12)",borderRadius:6,color:"rgba(255,255,255,0.7)",fontSize:"0.5rem",padding:"1px 4px"}}/>
-                    </div>
-                  </div>
-                : <div style={{display:"flex",alignItems:"center",gap:"0.5rem"}}>
-                    <span style={{fontSize:"0.9rem",flexShrink:0}}>{dim.emoji}</span>
-                    <div style={{flex:1,minWidth:0}}>
-                      <div style={{fontSize:"0.62rem",fontWeight:"700",color:"rgba(255,255,255,0.9)",lineHeight:1.2}}>{g.goal}</div>
-                      <div style={{fontSize:"0.48rem",color:"rgba(255,255,255,0.45)",marginTop:"2px"}}>{g.measure}</div>
-                    </div>
-                    {g.due&&<div style={{fontSize:"0.44rem",color:dim.color,flexShrink:0,fontWeight:"600"}}>{g.due.slice(0,7)}</div>}
-                  </div>
-              }
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-function CompassView({scores, compassData, onCompassChange}){
-  return(
-    <div style={{animation:"fadeIn 0.3s ease"}}>
-      {/* Mission */}
-      <EditableBubble
-        label="Mission"
-        value={compassData.mission}
-        onChange={v=>onCompassChange("mission",v)}
-        color="linear-gradient(135deg,#1a1035,#0e0e20)"
-        accentColor="rgba(167,139,250,0.85)"
-        italic={true}
-      />
-      {/* Vision */}
-      <EditableBubble
-        label="Vision"
-        value={compassData.vision}
-        onChange={v=>onCompassChange("vision",v)}
-        color="linear-gradient(135deg,#0a1a35,#060e20)"
-        accentColor="rgba(103,232,249,0.8)"
-        italic={true}
-      />
-      {/* Values */}
-      <ValuesBubbles
-        values={compassData.values}
-        onChange={v=>onCompassChange("values",v)}
-      />
-      {/* SMART Goals */}
-      <SmartGoals
-        goals={compassData.smartGoals}
-        onChange={v=>onCompassChange("smartGoals",v)}
-      />
-      {/* Daily Habits */}
-      <EditableGrid
-        label="Daily Habits"
-        items={compassData.habits}
-        onChange={v=>onCompassChange("habits",v)}
-        accentColor="rgba(74,222,128,0.8)"
-        bgColor="linear-gradient(135deg,#0e1a10,#080e0a)"
-      />
-      {/* Mentors */}
-      <EditableGrid
-        label="Mentors"
-        items={compassData.mentors}
-        onChange={v=>onCompassChange("mentors",v)}
-        accentColor="rgba(251,191,36,0.8)"
-        bgColor="linear-gradient(135deg,#1a1408,#100e04)"
-      />
-      {/* Tasks */}
-      <TasksGrid
-        tasks={compassData.tasks}
-        onChange={v=>onCompassChange("tasks",v)}
-      />
-    </div>
-  );
-}
-
-// ── Wheel View ────────────────────────────────────────────────────────────────
-function ScoreNode({dim, score, onScore, totalDims}){
-  const [active, setActive] = useState(false);
-  const [draft,  setDraft]  = useState(null);
-  const inputRef = useRef(null);
-  const nodeRef  = useRef(null);
-
-  const display = draft !== null ? draft : (score || 0);
-  const has     = score > 0;
-
-  const commit = (val) => {
-    const v = val !== undefined ? val : display;
-    if(v >= 1 && v <= 10){ onScore(dim.id, v); }
-    setDraft(null);
-    setActive(false);
-  };
-
-  const adjust = (delta) => {
-    const cur = display || 0;
-    const nv  = Math.max(1, Math.min(10, cur + delta));
-    setDraft(nv);
-    onScore(dim.id, nv);
-  };
-
-  const handleKey = (e) => {
-    if(e.key==="ArrowRight"||e.key==="ArrowUp"){e.preventDefault();adjust(+1);}
-    if(e.key==="ArrowLeft"||e.key==="ArrowDown"){e.preventDefault();adjust(-1);}
-    if(e.key==="Enter"||e.key==="Tab"){
-      e.preventDefault();
-      commit();
-      const nextId=((dim.id % totalDims)+1);
-      setTimeout(()=>{
-        const el=document.getElementById(`score-node-${nextId}`);
-        if(el){el.click();setTimeout(()=>{const inp=document.getElementById(`score-input-${nextId}`);if(inp)inp.focus();},60);}
-      },40);
-    }
-    if(e.key==="Escape"){setDraft(null);setActive(false);}
-  };
-
-  const handleClickOutside=useCallback((e)=>{
-    if(nodeRef.current&&!nodeRef.current.contains(e.target)){commit();}
-  },[display]);
-
-  useEffect(()=>{
-    if(active){document.addEventListener("mousedown",handleClickOutside);return()=>document.removeEventListener("mousedown",handleClickOutside);}
-  },[active,handleClickOutside]);
-
-  return(
-    <div ref={nodeRef} id={`score-node-${dim.id}`}
-      style={{display:"inline-flex",flexDirection:"column",alignItems:"center",gap:"2px",cursor:"pointer"}}
-      onClick={()=>{if(!active){setActive(true);setTimeout(()=>inputRef.current?.focus(),40);}}}>
-      <div style={{fontFamily:"'Playfair Display',serif",fontSize:active?"1.3rem":"1.1rem",fontWeight:"900",color:active?dim.color:has?"rgba(255,255,255,0.9)":"rgba(255,255,255,0.25)",lineHeight:1,transition:"all 0.15s",textShadow:active?`0 0 12px ${dim.color}`:"none",minWidth:"1.2rem",textAlign:"center"}}>
-        {display>0?display:"·"}
-      </div>
-      {active&&(
-        <div style={{display:"flex",alignItems:"center",gap:"3px",animation:"slideUp 0.12s ease"}}>
-          <button onMouseDown={e=>{e.preventDefault();adjust(-1);}} style={{width:18,height:18,borderRadius:"50%",background:`${dim.color}50`,border:`1px solid ${dim.color}`,color:"white",fontSize:"0.9rem",lineHeight:1,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",padding:0}}>−</button>
-          <input ref={inputRef} id={`score-input-${dim.id}`} type="number" min="1" max="10" value={display||""} placeholder="–" onChange={e=>{const v=parseInt(e.target.value);if(v>=1&&v<=10){setDraft(v);onScore(dim.id,v);}}} onKeyDown={handleKey} onBlur={()=>commit()} style={{width:28,height:18,textAlign:"center",background:"rgba(0,0,0,0.5)",border:`1px solid ${dim.color}`,borderRadius:5,color:"white",fontSize:"0.75rem",fontWeight:"800",fontFamily:"'Playfair Display',serif",padding:0,outline:"none"}}/>
-          <button onMouseDown={e=>{e.preventDefault();adjust(+1);}} style={{width:18,height:18,borderRadius:"50%",background:`${dim.color}50`,border:`1px solid ${dim.color}`,color:"white",fontSize:"0.9rem",lineHeight:1,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",padding:0}}>+</button>
-        </div>
-      )}
-      {!active&&<div style={{fontSize:"0.35rem",fontWeight:"800",letterSpacing:"0.04em",color:has?"rgba(255,255,255,0.3)":"#FCA5A5",lineHeight:1}}>{has?"":"SCORE"}</div>}
-    </div>
-  );
-}
-
-function WheelView({scores, onScore}){
+function WheelSVG({scores,onScore}){
   const N=DIMS.length,SVG=280,cx=SVG/2,cy=SVG/2,maxR=100;
   const angle=i=>(i*2*Math.PI)/N-Math.PI/2;
   const pt=(i,r)=>({x:cx+r*Math.cos(angle(i)),y:cy+r*Math.sin(angle(i))});
   const path=DIMS.map((d,i)=>{const r=((scores[d.id]||0)/10)*maxR;const p=pt(i,Math.max(r,2));return`${i===0?"M":"L"}${p.x.toFixed(1)},${p.y.toFixed(1)}`;}).join(" ")+"Z";
-  const SCORE_R=maxR+18,LABEL_R=maxR+44;
-
+  const [activeId,setActiveId]=useState(null);
+  const [draft,setDraft]=useState({});
+  const nodeRef=useRef({});
+  const commitAll=useCallback(()=>{setActiveId(null);},[]);
   return(
-    <div style={{animation:"fadeIn 0.3s ease",padding:"0 0.25rem"}}>
+    <div style={{padding:"0 0.25rem"}}>
       <div style={{position:"relative",width:"100%",maxWidth:SVG+180,margin:"0 auto"}}>
         <svg viewBox={`0 0 ${SVG} ${SVG}`} style={{display:"block",width:"100%",overflow:"visible"}}>
-          {[1,2,3,4,5,6,7,8,9,10].map(lv=>(<text key={lv} x={cx+5} y={cy-(lv/10)*maxR+4} fontSize="9" fontWeight="600" fill="rgba(255,255,255,0.3)" textAnchor="start" style={{userSelect:"none"}}>{lv}</text>))}
-          {[2,4,6,8,10].map(lv=>(<polygon key={lv} points={DIMS.map((_,i)=>{const p=pt(i,(lv/10)*maxR);return`${p.x},${p.y}`;}).join(" ")} fill="none" stroke={lv===10?"rgba(255,255,255,0.35)":"rgba(255,255,255,0.14)"} strokeWidth={lv===10?2:1}/>))}
-          {DIMS.map((d,i)=>{const o=pt(i,maxR+6);return<line key={i} x1={cx} y1={cy} x2={o.x} y2={o.y} stroke={d.color} strokeWidth="1.2" strokeOpacity="0.55"/>;})}
-          <path d={path} fill="rgba(167,139,250,0.12)" stroke="rgba(167,139,250,0.6)" strokeWidth="2" style={{transition:"all 0.35s ease"}}/>
-          {DIMS.map((d,i)=>{const r=((scores[d.id]||0)/10)*maxR;const p=pt(i,Math.max(r,5));const has=scores[d.id]>0;return(<circle key={d.id} cx={p.x} cy={p.y} r="5.5" fill={has?d.color:"rgba(255,255,255,0.12)"} stroke={has?`${d.color}88`:"rgba(255,255,255,0.2)"} strokeWidth="1" style={{transition:"all 0.3s ease"}}/>);})}
-          <text x={cx} y={cy-4} textAnchor="middle" fontSize="7" fill="rgba(255,255,255,0.12)" letterSpacing="0.5">TAP NUMBER</text>
-          <text x={cx} y={cy+8} textAnchor="middle" fontSize="7" fill="rgba(255,255,255,0.12)" letterSpacing="0.5">TO SCORE</text>
+          {[1,2,3,4,5,6,7,8,9,10].map(lv=>(<text key={lv} x={cx+5} y={cy-(lv/10)*maxR+4} fontSize="9" fontWeight="600" fill="rgba(255,255,255,0.25)" textAnchor="start" style={{userSelect:"none"}}>{lv}</text>))}
+          {[2,4,6,8,10].map(lv=>(<polygon key={lv} points={DIMS.map((_,i)=>{const p=pt(i,(lv/10)*maxR);return`${p.x},${p.y}`;}).join(" ")} fill="none" stroke={lv===10?"rgba(255,255,255,0.3)":"rgba(255,255,255,0.1)"} strokeWidth={lv===10?1.8:0.8}/>))}
+          {DIMS.map((d,i)=>{const o=pt(i,maxR+6);return<line key={i} x1={cx} y1={cy} x2={o.x} y2={o.y} stroke={d.color} strokeWidth="1.1" strokeOpacity="0.48"/>;})}
+          <path d={path} fill="rgba(167,139,250,0.1)" stroke="rgba(167,139,250,0.52)" strokeWidth="2" style={{transition:"all 0.35s ease"}}/>
+          {DIMS.map((d,i)=>{const r=((scores[d.id]||0)/10)*maxR;const p=pt(i,Math.max(r,5));const has=scores[d.id]>0;return(<circle key={d.id} cx={p.x} cy={p.y} r="5.5" fill={has?d.color:"rgba(255,255,255,0.1)"} stroke={has?`${d.color}88`:"rgba(255,255,255,0.16)"} strokeWidth="1" style={{transition:"all 0.3s ease"}}/>);})}
+          <text x={cx} y={cy+4} textAnchor="middle" fontSize="6.5" fill="rgba(255,255,255,0.08)" letterSpacing="0.5">TAP TO SCORE</text>
         </svg>
         {DIMS.map((d,i)=>{
           const a=angle(i),cosA=Math.cos(a),sinA=Math.sin(a);
-          const sp=pt(i,SCORE_R),spX=(sp.x/SVG)*100,spY=(sp.y/SVG)*100;
-          const lp=pt(i,LABEL_R),lpX=(lp.x/SVG)*100,lpY=(lp.y/SVG)*100;
+          const sp=pt(i,maxR+18),spX=(sp.x/SVG)*100,spY=(sp.y/SVG)*100;
+          const lp=pt(i,maxR+44),lpX=(lp.x/SVG)*100,lpY=(lp.y/SVG)*100;
           const tx=cosA<-0.2?"-100%":cosA>0.2?"0%":"-50%";
           const ty=sinA<-0.2?"-100%":sinA>0.2?"0%":"-50%";
+          const isActive=activeId===d.id;
+          const curScore=scores[d.id]||0;
+          const adjust=(delta)=>{const nv=Math.max(1,Math.min(10,curScore+delta));onScore(d.id,nv);};
           return(
             <React.Fragment key={d.id}>
               <div style={{position:"absolute",left:`${spX}%`,top:`${spY}%`,transform:"translate(-50%,-50%)",zIndex:30}}>
-                <ScoreNode dim={d} score={scores[d.id]||0} onScore={onScore} totalDims={N}/>
+                <div onClick={()=>setActiveId(isActive?null:d.id)} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:"1px",cursor:"pointer"}}>
+                  <div style={{fontFamily:"'Playfair Display',serif",fontSize:isActive?"1.3rem":"1.05rem",fontWeight:"900",color:isActive?d.color:curScore>0?"rgba(255,255,255,0.88)":"rgba(255,255,255,0.22)",lineHeight:1,transition:"all 0.15s",textShadow:isActive?`0 0 12px ${d.color}`:"none",minWidth:"1.2rem",textAlign:"center"}}>
+                    {curScore>0?curScore:"·"}
+                  </div>
+                  {isActive&&(
+                    <div style={{display:"flex",alignItems:"center",gap:"3px",marginTop:"2px"}} onClick={e=>e.stopPropagation()}>
+                      <button onMouseDown={e=>{e.preventDefault();adjust(-1);}} style={{width:18,height:18,borderRadius:"50%",background:`${d.color}50`,border:`1px solid ${d.color}`,color:"white",fontSize:"0.9rem",lineHeight:1,display:"flex",alignItems:"center",justifyContent:"center",padding:0}}>−</button>
+                      <input type="number" min="1" max="10" defaultValue={curScore||""} onChange={e=>{const v=parseInt(e.target.value);if(v>=1&&v<=10)onScore(d.id,v);}} style={{width:26,height:18,textAlign:"center",background:"rgba(0,0,0,0.5)",border:`1px solid ${d.color}`,borderRadius:5,color:"white",fontSize:"0.72rem",fontWeight:"800",fontFamily:"'Playfair Display',serif",padding:0,outline:"none"}}/>
+                      <button onMouseDown={e=>{e.preventDefault();adjust(+1);}} style={{width:18,height:18,borderRadius:"50%",background:`${d.color}50`,border:`1px solid ${d.color}`,color:"white",fontSize:"0.9rem",lineHeight:1,display:"flex",alignItems:"center",justifyContent:"center",padding:0}}>+</button>
+                    </div>
+                  )}
+                  {!isActive&&<div style={{fontSize:"0.33rem",fontWeight:"800",color:curScore>0?"rgba(255,255,255,0.25)":"#FCA5A5",lineHeight:1}}>{curScore>0?"":"SCORE"}</div>}
+                </div>
               </div>
               <div style={{position:"absolute",left:`${lpX}%`,top:`${lpY}%`,transform:`translate(${tx},${ty})`,zIndex:20,pointerEvents:"none"}}>
-                <div style={{borderRadius:12,background:`linear-gradient(150deg,${d.color}ee,${d.color}aa)`,boxShadow:`0 2px 10px ${d.color}44`,padding:"4px 8px",display:"flex",alignItems:"center",gap:"5px",whiteSpace:"nowrap",position:"relative",overflow:"hidden"}}>
-                  <div style={{position:"absolute",top:0,left:0,right:0,height:"50%",background:"rgba(255,255,255,0.1)",borderRadius:"12px 12px 60% 60%",pointerEvents:"none"}}/>
-                  <span style={{fontSize:"1.2rem",lineHeight:1,flexShrink:0,position:"relative",zIndex:1}}>{d.emoji}</span>
-                  <span style={{fontSize:"0.75rem",fontWeight:"700",color:"white",lineHeight:1.15,position:"relative",zIndex:1}}>{d.label}</span>
+                <div style={{borderRadius:10,background:`linear-gradient(150deg,${d.color}ee,${d.color}aa)`,padding:"3px 7px",display:"flex",alignItems:"center",gap:"4px",whiteSpace:"nowrap",position:"relative",overflow:"hidden"}}>
+                  <div style={{position:"absolute",top:0,left:0,right:0,height:"50%",background:"rgba(255,255,255,0.09)",borderRadius:"10px 10px 60% 60%",pointerEvents:"none"}}/>
+                  <span style={{fontSize:"1.05rem",lineHeight:1,position:"relative",zIndex:1}}>{d.emoji}</span>
+                  <span style={{fontSize:"0.65rem",fontWeight:"700",color:"white",lineHeight:1.15,position:"relative",zIndex:1}}>{d.label}</span>
                 </div>
               </div>
             </React.Fragment>
           );
         })}
       </div>
-      <div style={{textAlign:"center",marginTop:"0.4rem",fontSize:"0.48rem",color:"rgba(255,255,255,0.2)",fontStyle:"italic"}}>
-        Tap a score number · − + or keyboard · Tab → clockwise
+      <div style={{textAlign:"center",marginTop:"0.3rem",fontSize:"0.42rem",color:"rgba(255,255,255,0.16)",fontStyle:"italic"}}>Tap number · − + to adjust · Tab clockwise</div>
+    </div>
+  );
+}
+
+function LifeView({scores,onScore}){
+  const [sub,setSub]=useState("list");
+  return(
+    <div style={{height:"100%",display:"flex",flexDirection:"column"}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"0.75rem 1rem 0.5rem"}}>
+        <h2 style={{fontFamily:"'Cinzel',serif",fontSize:"1.1rem",fontWeight:"900",background:"linear-gradient(135deg,#e2d9f3,#a78bfa)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>My Life</h2>
+        <div style={{display:"inline-flex",background:"rgba(255,255,255,0.04)",borderRadius:10,padding:"3px",border:"1px solid rgba(255,255,255,0.07)"}}>
+          {[["list","▦ Cards"],["wheel","◎ Wheel"]].map(([v,l])=>(
+            <button key={v} onClick={()=>setSub(v)} style={{padding:"0.28rem 0.65rem",borderRadius:7,background:sub===v?"rgba(167,139,250,0.2)":"transparent",border:"none",color:sub===v?"#c4b5fd":"rgba(255,255,255,0.28)",fontSize:"0.56rem",fontWeight:"700",transition:"all 0.15s"}}>{l}</button>
+          ))}
+        </div>
+      </div>
+      <div style={{flex:1,overflowY:"auto",padding:"0 1rem 1rem"}}>
+        {sub==="list"&&<div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:"0.42rem",animation:"fadeIn 0.2s ease"}}>{DIMS.map(dim=><DimCard key={dim.id} dim={dim} score={scores[dim.id]||0} onScore={v=>onScore(dim.id,v)}/>)}</div>}
+        {sub==="wheel"&&<WheelSVG scores={scores} onScore={onScore}/>}
+      </div>
+    </div>
+  );
+}
+
+// ── Quick Add ─────────────────────────────────────────────────────────────────
+function QuickAdd({onAdd,onClose}){
+  const [text,setText]=useState("");
+  const [selDim,setSelDim]=useState(5);
+  const inputRef=useRef(null);
+  useEffect(()=>{ setTimeout(()=>inputRef.current?.focus(),120); },[]);
+  const handleAdd=()=>{ if(text.trim()){onAdd(text.trim(),selDim);onClose();} };
+  return(
+    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.72)",zIndex:500,display:"flex",alignItems:"flex-end",animation:"fadeIn 0.15s ease"}} onClick={onClose}>
+      <div style={{width:"100%",background:"#0F0F1A",borderRadius:"20px 20px 0 0",padding:"1.2rem 1rem 2rem",border:"1px solid rgba(255,255,255,0.08)"}} onClick={e=>e.stopPropagation()}>
+        <div style={{width:38,height:3,background:"rgba(255,255,255,0.18)",borderRadius:2,margin:"0 auto 1rem"}}/>
+        <div style={{fontSize:"0.46rem",color:"rgba(255,255,255,0.28)",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:"0.6rem"}}>Say it out loud first. Then add it.</div>
+        <input ref={inputRef} value={text} onChange={e=>setText(e.target.value)} onKeyDown={e=>e.key==="Enter"&&handleAdd()} placeholder="What is your next right action?" style={{width:"100%",background:"rgba(255,255,255,0.07)",border:"1px solid rgba(255,255,255,0.14)",borderRadius:12,padding:"0.62rem 0.72rem",color:"white",fontSize:"0.72rem",outline:"none",marginBottom:"0.6rem"}}/>
+        <div style={{fontSize:"0.42rem",color:"rgba(255,255,255,0.28)",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:"0.38rem"}}>Dimension</div>
+        <div style={{display:"flex",flexWrap:"wrap",gap:"0.28rem",marginBottom:"0.72rem"}}>
+          {DIMS.map(d=>(
+            <button key={d.id} onClick={()=>setSelDim(d.id)} style={{padding:"3px 8px",borderRadius:20,background:selDim===d.id?`${d.color}38`:"rgba(255,255,255,0.05)",border:selDim===d.id?`1px solid ${d.color}`:"1px solid rgba(255,255,255,0.07)",color:selDim===d.id?"white":"rgba(255,255,255,0.38)",fontSize:"0.48rem",fontWeight:selDim===d.id?"700":"400"}}>
+              {d.emoji} {d.label}
+            </button>
+          ))}
+        </div>
+        <button onClick={handleAdd} style={{width:"100%",padding:"0.72rem",borderRadius:14,background:"linear-gradient(135deg,#7C3AED,#4F46E5)",border:"none",color:"white",fontSize:"0.72rem",fontWeight:"800",letterSpacing:"0.06em",textTransform:"uppercase"}}>
+          Add to Actions
+        </button>
       </div>
     </div>
   );
 }
 
 // ── App ───────────────────────────────────────────────────────────────────────
-const STORAGE_KEY="hyl_scores_v1";
-const COMPASS_KEY="hyl_compass_v1";
-
-const DEFAULT_COMPASS={
-  mission: DEFAULT_MISSION,
-  vision: DEFAULT_VISION,
-  values: DEFAULT_VALUES,
-  habits: DEFAULT_HABITS,
-  mentors: DEFAULT_MENTORS,
-  tasks: DEFAULT_TASKS,
-  smartGoals: DEFAULT_SMART_GOALS,
-};
+const DEFAULT_COMPASS={mission:DEFAULT_MISSION,vision:DEFAULT_VISION,values:DEFAULT_VALUES};
 
 function App(){
-  const [scores,setScores]=useState(()=>{try{const s=localStorage.getItem(STORAGE_KEY);return s?JSON.parse(s):{}}catch(e){return{};}});
-  const [compassData,setCompassData]=useState(()=>{try{const c=localStorage.getItem(COMPASS_KEY);return c?JSON.parse(c):DEFAULT_COMPASS;}catch(e){return DEFAULT_COMPASS;}});
-  const [view,setView]=useState(getViewFromURL);
+  const [scores,   setScores]   = useState(()=>load(STORAGE_SCORES,{}));
+  const [compass,  setCompass]  = useState(()=>load(STORAGE_COMPASS,DEFAULT_COMPASS));
+  const [nra,      setNra]      = useState(()=>load(STORAGE_ACTION,{text:"Call someone. Not text. Call.",dim:5}));
+  const [actions,  setActions]  = useState(()=>load(STORAGE_ACTIONS,DEFAULT_ACTIONS_LIST));
+  const [view,     setView]     = useState("home");
+  const [barOpen,  setBarOpen]  = useState(false);
+  const [showAdd,  setShowAdd]  = useState(false);
 
-  useEffect(()=>{try{localStorage.setItem(STORAGE_KEY,JSON.stringify(scores));}catch(e){};},[scores]);
-  useEffect(()=>{try{localStorage.setItem(COMPASS_KEY,JSON.stringify(compassData));}catch(e){};},[compassData]);
+  useEffect(()=>save(STORAGE_SCORES,scores),[scores]);
+  useEffect(()=>save(STORAGE_COMPASS,compass),[compass]);
+  useEffect(()=>save(STORAGE_ACTION,nra),[nra]);
+  useEffect(()=>save(STORAGE_ACTIONS,actions),[actions]);
 
   const setScore=(id,val)=>setScores(s=>({...s,[id]:val}));
-  const handleCompassChange=(field,val)=>setCompassData(d=>({...d,[field]:val}));
-  const handleView=v=>{setView(v);setURLView(v);};
-  useEffect(()=>{const fn=()=>setView(getViewFromURL());window.addEventListener("popstate",fn);return()=>window.removeEventListener("popstate",fn);},[]);
+  const updateCompass=(field,val)=>setCompass(d=>({...d,[field]:val}));
+  const markDone=(id)=>setActions(a=>a.map(x=>x.id===id?{...x,status:"done"}:x));
+  const setNraFromAction=(action)=>{ setNra({text:action.text,dim:action.dim}); setBarOpen(false); };
+  const markNraDone=()=>{
+    setActions(a=>a.map(x=>(x.text===nra.text&&x.dim===nra.dim)?{...x,status:"done"}:x));
+    const next=actions.find(a=>a.status==="active"&&(a.text!==nra.text||a.dim!==nra.dim));
+    if(next) setNra({text:next.text,dim:next.dim});
+    setBarOpen(false);
+  };
+  const addAction=(text,dim)=>{ const a={id:Date.now(),text,dim,status:"active"}; setActions(prev=>[a,...prev]); setNra({text,dim}); };
 
   return(
-    <div style={{minHeight:"100vh",background:"#080810",fontFamily:"'DM Sans',sans-serif",color:"white"}}>
-      <div style={{maxWidth:480,margin:"0 auto",padding:"0.9rem 1rem 3rem"}}>
-
-        {/* Header */}
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"0.8rem"}}>
-          <h1 style={{fontFamily:"'Cinzel',serif",fontSize:"1.4rem",fontWeight:"900",background:"linear-gradient(135deg,#e2d9f3,#a78bfa 50%,#67e8f9)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",letterSpacing:"0.04em",lineHeight:1}}>
-            Honor Your Life
-          </h1>
-          <ViewToggle view={view} setView={handleView}/>
-        </div>
-
-        {/* Mission strip — list + wheel only */}
-        {view!=="compass"&&(
-          <div style={{borderRadius:14,padding:"0.6rem 0.85rem",background:"linear-gradient(135deg,#1a1035,#0e0e20)",border:"1px solid rgba(167,139,250,0.18)",marginBottom:"1.4rem",position:"relative",overflow:"hidden"}}>
-            <div style={{position:"absolute",top:-10,right:-10,width:50,height:50,borderRadius:"50%",background:"rgba(167,139,250,0.07)",pointerEvents:"none"}}/>
-            <div style={{fontSize:"0.44rem",color:"rgba(167,139,250,0.7)",letterSpacing:"0.14em",textTransform:"uppercase",fontWeight:"700",marginBottom:"0.22rem"}}>◈ Mission</div>
-            <div style={{fontSize:"0.63rem",color:"rgba(255,255,255,0.58)",lineHeight:"1.4",fontStyle:"italic",overflow:"hidden",display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical"}}>"{compassData.mission}"</div>
-          </div>
-        )}
-
-        {/* Views */}
-        {view==="list"&&(
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:"0.5rem",animation:"fadeIn 0.25s ease"}}>
-            {DIMS.map(dim=><DimCard key={dim.id} dim={dim} score={scores[dim.id]||0} onScore={v=>setScore(dim.id,v)}/>)}
-          </div>
-        )}
-        {view==="wheel"&&<WheelView scores={scores} onScore={setScore}/>}
-        {view==="compass"&&<CompassView scores={scores} compassData={compassData} onCompassChange={handleCompassChange}/>}
-
-        {/* Footer */}
-        <div style={{marginTop:"1.8rem",textAlign:"center",fontSize:"0.53rem",color:"rgba(255,255,255,0.17)",lineHeight:"1.9",fontStyle:"italic"}}>
-          This app is a compass, not a destination. Put it down often.<br/>
-          A little better than an hour ago is a massive win.
-        </div>
+    <div style={{height:"100vh",display:"flex",flexDirection:"column",background:"#080810",overflow:"hidden"}}>
+      <div style={{flex:1,overflow:"hidden",position:"relative"}}>
+        {view==="home"   && <HomeView   compassData={compass} onChange={updateCompass}/>}
+        {view==="search" && <SearchView actions={actions} scores={scores}/>}
+        {view==="life"   && <LifeView   scores={scores} onScore={setScore}/>}
       </div>
+
+      <div style={{padding:"0 0.75rem 0",background:"#080810"}}>
+        {barOpen&&<ActionExpanded actions={actions} scores={scores} onSetNRA={setNraFromAction} onDone={markDone} onAdd={addAction}/>}
+        <ActionBar nra={nra} onDone={markNraDone} onExpand={()=>setBarOpen(o=>!o)} expanded={barOpen}/>
+      </div>
+
+      <BottomNav view={view} setView={v=>{setView(v);setBarOpen(false);}} onPlus={()=>setShowAdd(true)}/>
+      {showAdd&&<QuickAdd onAdd={addAction} onClose={()=>setShowAdd(false)}/>}
     </div>
   );
 }
