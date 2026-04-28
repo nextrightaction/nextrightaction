@@ -88,18 +88,32 @@ function LifeIcon({active}){const c=active?"white":"rgba(255,255,255,0.4)";retur
 function ActionBar({nra,onDone,onExpand,expanded}){
   const dim=DIMS.find(d=>d.id===nra.dim)||DIMS[0];
   return(
-    <div onClick={onExpand} style={{background:`linear-gradient(135deg,${dim.color}e0,${dim.color}a0)`,borderRadius:expanded?"16px 16px 0 0":16,padding:"0.7rem 1rem",display:"flex",alignItems:"center",gap:"0.7rem",cursor:"pointer",position:"relative",overflow:"hidden",boxShadow:`0 -2px 20px ${dim.color}44`,transition:"border-radius 0.2s",marginBottom:expanded?0:"0.4rem"}}>
-      <div style={{position:"absolute",top:0,left:0,right:0,height:"50%",background:"rgba(255,255,255,0.08)",borderRadius:"16px 16px 60% 60%",pointerEvents:"none"}}/>
-      <span style={{fontSize:"1.3rem",flexShrink:0}}>{dim.emoji}</span>
-      <div style={{flex:1,minWidth:0}}>
-        <div style={{fontSize:"0.4rem",color:"rgba(255,255,255,0.6)",letterSpacing:"0.16em",textTransform:"uppercase",fontWeight:"800",marginBottom:"1px"}}>ACTION</div>
-        <div style={{fontSize:"0.75rem",fontWeight:"700",color:"white",lineHeight:1.3,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{nra.text}</div>
+    <div style={{borderRadius:expanded?"16px 16px 0 0":16,overflow:"hidden",border:`1.5px solid ${dim.color}88`,boxShadow:`0 4px 24px ${dim.color}55`}}>
+      {/* Direction header */}
+      <div style={{background:`linear-gradient(135deg,${dim.color},${dim.color}cc)`,padding:"0.45rem 1rem 0.3rem",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+        <div style={{display:"flex",alignItems:"center",gap:"0.45rem"}}>
+          <span style={{fontSize:"1.1rem"}}>⏳</span>
+          <div>
+            <div style={{fontSize:"0.52rem",fontWeight:"900",color:"white",letterSpacing:"0.12em",textTransform:"uppercase",lineHeight:1}}>Your Next Right Action</div>
+            <div style={{fontSize:"0.44rem",color:"rgba(255,255,255,0.75)",marginTop:"2px",fontStyle:"italic"}}>Do the right thing. Get it done.</div>
+          </div>
+        </div>
+        <button onClick={onExpand} style={{background:"rgba(0,0,0,0.2)",border:"1px solid rgba(255,255,255,0.25)",borderRadius:20,padding:"3px 9px",color:"white",fontSize:"0.44rem",fontWeight:"700",letterSpacing:"0.06em"}}>
+          {expanded?"▲ LESS":"▼ ALL"}
+        </button>
       </div>
-      <div style={{display:"flex",gap:"0.4rem",flexShrink:0}} onClick={e=>e.stopPropagation()}>
-        <button onClick={onDone} style={{padding:"0.3rem 0.65rem",borderRadius:20,background:"rgba(34,197,94,0.3)",border:"1px solid rgba(34,197,94,0.6)",color:"#4ADE80",fontSize:"0.55rem",fontWeight:"800",letterSpacing:"0.06em"}}>✓ DONE</button>
-        <button onClick={()=>scheduleGCal(nra.text,dim.label)} style={{padding:"0.3rem 0.5rem",borderRadius:20,background:"rgba(255,255,255,0.12)",border:"1px solid rgba(255,255,255,0.2)",color:"white",fontSize:"0.65rem"}}>📅</button>
+      {/* Action text + buttons */}
+      <div style={{background:`linear-gradient(135deg,${dim.color}22,${dim.color}10)`,backdropFilter:"blur(8px)",padding:"0.55rem 1rem",display:"flex",alignItems:"center",gap:"0.65rem"}}>
+        <span style={{fontSize:"1.4rem",flexShrink:0}}>{dim.emoji}</span>
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{fontSize:"0.85rem",fontWeight:"700",color:"white",lineHeight:1.3}}>{nra.text}</div>
+          <div style={{fontSize:"0.44rem",color:dim.color,marginTop:"2px",fontWeight:"700",textTransform:"uppercase",letterSpacing:"0.08em"}}>{dim.label} · {dim.sub}</div>
+        </div>
+        <div style={{display:"flex",flexDirection:"column",gap:"0.3rem",flexShrink:0}} onClick={e=>e.stopPropagation()}>
+          <button onClick={onDone} style={{padding:"0.38rem 0.9rem",borderRadius:20,background:"rgba(34,197,94,0.35)",border:"1.5px solid rgba(34,197,94,0.7)",color:"#4ADE80",fontSize:"0.6rem",fontWeight:"900",letterSpacing:"0.08em",textTransform:"uppercase",whiteSpace:"nowrap"}}>✓ Mark Done</button>
+          <button onClick={()=>scheduleGCal(nra.text,dim.label)} style={{padding:"0.3rem 0.9rem",borderRadius:20,background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.2)",color:"rgba(255,255,255,0.7)",fontSize:"0.55rem",fontWeight:"600",whiteSpace:"nowrap"}}>📅 Schedule</button>
+        </div>
       </div>
-      <div style={{fontSize:"0.6rem",color:"rgba(255,255,255,0.45)",flexShrink:0}}>{expanded?"▼":"▲"}</div>
     </div>
   );
 }
@@ -304,9 +318,9 @@ function ValuesBubbles({values,onChange}){
 function HomeView({compassData,onChange}){
   return(
     <div style={{height:"100%",overflowY:"auto",padding:"0 1rem 1rem"}}>
-      <div style={{paddingTop:"0.75rem",marginBottom:"0.8rem"}}>
-        <h1 style={{fontFamily:"'Cinzel',serif",fontSize:"1.4rem",fontWeight:"900",background:"linear-gradient(135deg,#e2d9f3,#a78bfa 50%,#67e8f9)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",letterSpacing:"0.04em",lineHeight:1,marginBottom:"0.15rem"}}>Honor Your Life</h1>
-        <p style={{fontSize:"0.46rem",color:"rgba(255,255,255,0.22)",letterSpacing:"0.1em",textTransform:"uppercase"}}>Right Seeing. Right Action.</p>
+      <div style={{paddingTop:"0.7rem",marginBottom:"0.8rem"}}>
+        <h1 style={{fontFamily:"'Cinzel',serif",fontSize:"1.65rem",fontWeight:"900",background:"linear-gradient(135deg,#f0ebff,#c4b5fd 50%,#67e8f9)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",letterSpacing:"0.04em",lineHeight:1,marginBottom:"0.3rem"}}>Honor Your Life</h1>
+        <p style={{fontSize:"0.72rem",color:"rgba(255,255,255,0.6)",letterSpacing:"0.08em",fontStyle:"italic",fontFamily:"'Playfair Display',serif"}}>Right Seeing. Right Action.</p>
       </div>
       <EditBubble label="Mission" value={compassData.mission} onChange={v=>onChange("mission",v)} accent="rgba(167,139,250,0.85)" bg="linear-gradient(135deg,#1a1035,#0e0e20)"/>
       <EditBubble label="Vision"  value={compassData.vision}  onChange={v=>onChange("vision",v)}  accent="rgba(103,232,249,0.8)"  bg="linear-gradient(135deg,#0a1a35,#060e20)"/>
@@ -507,15 +521,18 @@ function App(){
 
   return(
     <div style={{height:"100vh",display:"flex",flexDirection:"column",background:"#080810",overflow:"hidden"}}>
+
+      {/* ACTION BANNER — top, always visible, urgent */}
+      <div style={{padding:"0.6rem 0.75rem 0",background:"#080810",flexShrink:0}}>
+        <ActionBar nra={nra} onDone={markNraDone} onExpand={()=>setBarOpen(o=>!o)} expanded={barOpen}/>
+        {barOpen&&<ActionExpanded actions={actions} scores={scores} onSetNRA={setNraFromAction} onDone={markDone} onAdd={addAction}/>}
+      </div>
+
+      {/* Main content scrolls below banner */}
       <div style={{flex:1,overflow:"hidden",position:"relative"}}>
         {view==="home"   && <HomeView   compassData={compass} onChange={updateCompass}/>}
         {view==="search" && <SearchView actions={actions} scores={scores}/>}
         {view==="life"   && <LifeView   scores={scores} onScore={setScore}/>}
-      </div>
-
-      <div style={{padding:"0 0.75rem 0",background:"#080810"}}>
-        {barOpen&&<ActionExpanded actions={actions} scores={scores} onSetNRA={setNraFromAction} onDone={markDone} onAdd={addAction}/>}
-        <ActionBar nra={nra} onDone={markNraDone} onExpand={()=>setBarOpen(o=>!o)} expanded={barOpen}/>
       </div>
 
       <BottomNav view={view} setView={v=>{setView(v);setBarOpen(false);}} onPlus={()=>setShowAdd(true)}/>
