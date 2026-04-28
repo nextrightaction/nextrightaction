@@ -451,30 +451,309 @@ function ValuesBubbles({values,onChange}){
   );
 }
 
-function HomeView({compassData,onChange}){
+// ── Compass NRA strip — one line, expand button on bottom edge ────────────────
+function CompassNRA({nra, onDone, onSetNRA, actions}){
+  const [expanded, setExpanded] = useState(false);
+  const dim = DIMS.find(d=>d.id===nra.dim)||DIMS[0];
+  const nextActions = actions.filter(a=>a.status==="active"&&(a.text!==nra.text||a.dim!==nra.dim)).slice(0,4);
+
   return(
-    <div style={{height:"100%",overflowY:"auto",padding:"0 1rem 1rem"}}>
-      <div style={{paddingTop:"0.7rem",marginBottom:"0.8rem"}}>
-        <h1 style={{fontFamily:"'Cinzel',serif",fontSize:"1.65rem",fontWeight:"900",background:"linear-gradient(135deg,#f0ebff,#c4b5fd 50%,#67e8f9)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",letterSpacing:"0.04em",lineHeight:1,marginBottom:"0.45rem"}}>Honor Your Life</h1>
-        <p style={{fontSize:"0.62rem",color:"rgba(255,255,255,0.72)",fontFamily:"'Playfair Display',serif",lineHeight:1.7,marginBottom:"0.1rem"}}>
-          Create and Print <span style={{fontStyle:"italic"}}>My Compass.</span> Take Action.{" "}
-          Assess. Change Course. Repeat.
+    <div style={{marginBottom:"0.7rem",position:"relative"}}>
+      {/* One-line strip — always visible */}
+      <div style={{
+        background:"white", border:"1.5px solid #EF9F27",
+        borderRadius: expanded ? "8px 8px 0 0" : 8,
+        padding:"0.28rem 0.65rem",
+        display:"flex", alignItems:"center", gap:"0.5rem",
+        overflow:"hidden",
+      }}>
+        <div style={{flex:1, overflow:"hidden", whiteSpace:"nowrap", position:"relative"}}>
+          <style>{`@keyframes marquee{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}`}</style>
+          <span style={{
+            display:"inline-block",
+            animation: nra.text.length > 30 ? "marquee 14s linear infinite" : "none",
+            fontSize:"0.65rem", fontWeight:"700", color:"#111",
+          }}>
+            {nra.text}&nbsp;&nbsp;&nbsp;&nbsp;{nra.text.length > 30 ? nra.text+"    " : ""}
+          </span>
+        </div>
+        <button onClick={onDone} style={{padding:"1px 8px",borderRadius:20,background:"#FAEEDA",border:"1.5px solid #EF9F27",color:"#412402",fontSize:"0.46rem",fontWeight:"800",flexShrink:0,cursor:"pointer"}}>✓</button>
+      </div>
+
+      {/* Expand button — centered on bottom edge */}
+      <div style={{display:"flex",justifyContent:"center"}}>
+        <button onClick={()=>setExpanded(o=>!o)} style={{
+          padding:"1px 14px", borderRadius:"0 0 8px 8px",
+          background:"#EF9F27", border:"none",
+          color:"white", fontSize:"0.4rem", fontWeight:"800",
+          letterSpacing:"0.08em", textTransform:"uppercase",
+          cursor:"pointer", lineHeight:1.6,
+        }}>{expanded?"▲ minimize":"▼ expand"}</button>
+      </div>
+
+      {/* Expanded functional panel */}
+      {expanded&&(
+        <div style={{background:"white",border:"1.5px solid #EF9F27",borderTop:"none",borderRadius:"0 0 10px 10px",padding:"0.55rem 0.65rem",animation:"slideDown 0.15s ease"}}>
+          <div style={{fontSize:"0.46rem",fontWeight:"800",color:"#92400E",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:"0.2rem"}}>{dim.label} · Your Next Right Action</div>
+          <div style={{fontSize:"0.8rem",fontWeight:"700",color:"#111",lineHeight:1.3,marginBottom:"0.3rem"}}>{nra.text}</div>
+          <div style={{fontSize:"0.52rem",color:"#92400E",marginBottom:"0.4rem"}}>
+            Mark it <span onClick={onDone} style={{fontWeight:"900",textDecoration:"underline",cursor:"pointer"}}>Done!</span> Today or <span onClick={()=>scheduleGCal(nra.text,dim.label)} style={{fontWeight:"900",textDecoration:"underline",cursor:"pointer"}}>Schedule it!</span>
+          </div>
+          {nextActions.length>0&&(
+            <div>
+              <div style={{fontSize:"0.42rem",color:"#92400E",fontWeight:"700",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:"0.25rem"}}>Or choose next:</div>
+              {nextActions.map(a=>{const d=DIMS.find(x=>x.id===a.dim)||DIMS[0];return(
+                <button key={a.id} onClick={()=>{onSetNRA(a);setExpanded(false);}} style={{display:"block",width:"100%",textAlign:"left",padding:"0.25rem 0.45rem",marginBottom:"0.2rem",borderRadius:7,background:"#FFFDF7",border:`1px solid ${d.color}44`,color:"#111",fontSize:"0.56rem",fontWeight:"600",cursor:"pointer"}}>
+                  {a.text} <span style={{color:d.color,fontSize:"0.4rem",fontWeight:"700"}}>· {d.label}</span>
+                </button>
+              );})}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Section label ─────────────────────────────────────────────────────────────
+function SecLabel({text}){
+  return <div style={{fontSize:"0.65rem",fontWeight:"900",color:"rgba(255,255,255,0.55)",letterSpacing:"0.16em",textTransform:"uppercase",marginTop:"1.1rem",marginBottom:"0.5rem",paddingBottom:"0.3rem",borderBottom:"1px solid rgba(255,255,255,0.08)"}}>{text}</div>;
+}
+
+// ── Goals 3×6 — text only ────────────────────────────────────────────────────
+const DEFAULT_GOALS_DATA=[
+  {id:1,text:"Financially Independent",dim:8,due:"2030"},
+  {id:2,text:"Maritime Officer + Business Owner",dim:9,due:"2027"},
+  {id:3,text:"Loving Father",dim:5,due:"2025"},
+  {id:4,text:"Strong & Agile",dim:4,due:"2025"},
+  {id:5,text:"Spanish Speaker",dim:9,due:"2026"},
+  {id:6,text:"Loving Husband",dim:10,due:"2025"},
+  {id:7,text:"TSL Leader",dim:3,due:"2026"},
+  {id:8,text:"MKP Leader",dim:1,due:"2026"},
+  {id:9,text:"Vipassana",dim:1,due:"2026"},
+  {id:10,text:"Hoffman Process",dim:12,due:"2026"},
+  {id:11,text:"Writer",dim:9,due:"2026"},
+  {id:12,text:"ADHD Mastery",dim:2,due:"2025"},
+];
+
+function GoalsGrid(){
+  const [goals,setGoals] = useState(()=>load("hyl_goals_v1",DEFAULT_GOALS_DATA));
+  const [expanded,setExpanded] = useState(false);
+  useEffect(()=>save("hyl_goals_v1",goals),[goals]);
+  const display = expanded ? goals : goals.slice(0,6);
+  return(
+    <div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:"0.4rem"}}>
+        {display.map(g=>{
+          const dim=DIMS.find(d=>d.id===g.dim)||DIMS[0];
+          return(
+            <div key={g.id} style={{borderRadius:10,background:`${dim.color}18`,border:`1.5px solid ${dim.color}50`,padding:"0.5rem 0.55rem",minHeight:58,display:"flex",flexDirection:"column",justifyContent:"space-between"}}>
+              <div style={{fontSize:"0.6rem",fontWeight:"700",color:"rgba(255,255,255,0.92)",lineHeight:1.3}}>{g.text}</div>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:"4px"}}>
+                <div style={{fontSize:"0.4rem",color:dim.color,fontWeight:"700",textTransform:"uppercase"}}>{dim.label}</div>
+                {g.due&&<div style={{fontSize:"0.4rem",color:"rgba(255,255,255,0.4)",fontWeight:"600"}}>{g.due}</div>}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      {goals.length>6&&<button onClick={()=>setExpanded(o=>!o)} style={{width:"100%",marginTop:"0.35rem",padding:"0.28rem",borderRadius:7,background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.07)",color:"rgba(255,255,255,0.35)",fontSize:"0.42rem",cursor:"pointer"}}>{expanded?"▲ Less":` ▼ All ${goals.length}`}</button>}
+    </div>
+  );
+}
+
+// ── Daily Actions 3×6 — text only ────────────────────────────────────────────
+function DailyGrid({habits, nra, onSetNRA}){
+  const [expanded,setExpanded] = useState(false);
+  const display = expanded ? habits : habits.slice(0,6);
+  return(
+    <div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:"0.4rem"}}>
+        {display.map((h,i)=>{
+          const isNRA = nra.text===h.l;
+          return(
+            <div key={i} onClick={()=>onSetNRA({text:h.l,dim:h.dim||3})}
+              style={{borderRadius:10,background:isNRA?"rgba(239,159,39,0.15)":"rgba(255,255,255,0.04)",border:isNRA?"1.5px solid #EF9F27":"1px solid rgba(255,255,255,0.1)",padding:"0.5rem 0.55rem",minHeight:50,display:"flex",alignItems:"center",cursor:"pointer"}}>
+              <div style={{fontSize:"0.6rem",fontWeight:"600",color:isNRA?"#EF9F27":"rgba(255,255,255,0.8)",lineHeight:1.3}}>{h.l}</div>
+            </div>
+          );
+        })}
+      </div>
+      {habits.length>6&&<button onClick={()=>setExpanded(o=>!o)} style={{width:"100%",marginTop:"0.35rem",padding:"0.28rem",borderRadius:7,background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.07)",color:"rgba(255,255,255,0.35)",fontSize:"0.42rem",cursor:"pointer"}}>{expanded?"▲ Less":`▼ All ${habits.length}`}</button>}
+    </div>
+  );
+}
+
+// ── Mentors 3×4 grid by dimension ────────────────────────────────────────────
+const DEFAULT_MENTORS_BY_DIM={
+  1:["Henry Shukman","Viktor Frankl","Ryan Holiday"],
+  2:["Lisa Swihart","Brené Brown",""],
+  3:["bell hooks","",""],
+  4:["Mark Divine","",""],
+  5:["Tracy","",""],
+  6:["","",""],
+  7:["Tim Ferriss","",""],
+  8:["Paula Pant","Naval Ravikant",""],
+  9:["Jim Collins","Seth Godin",""],
+  10:["Tracy","John Gottman",""],
+  11:["Tim Ferriss","Cal Newport",""],
+  12:["Richard Rohr","",""],
+};
+
+function MentorsGrid({mentors, onChange}){
+  const [editing, setEditing] = useState(null);
+  const update=(dimId,idx,val)=>{
+    const next={...mentors};
+    const arr=[...(next[dimId]||["","",""])];
+    arr[idx]=val;
+    next[dimId]=arr;
+    onChange(next);
+  };
+  // 3 columns × 4 rows = show 12 dimensions in grid
+  return(
+    <div>
+      <div style={{fontSize:"0.44rem",color:"rgba(255,255,255,0.28)",fontStyle:"italic",marginBottom:"0.55rem",lineHeight:1.5}}>
+        At least one per dimension should be someone you know personally. Serve them — don't extract from them.
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:"0.4rem"}}>
+        {DIMS.map(dim=>{
+          const names=(mentors[dim.id]||["","",""]).slice(0,3);
+          const hasAny=names.some(n=>n.trim());
+          const isEditing=editing===dim.id;
+          return(
+            <div key={dim.id} style={{borderRadius:10,background:`${dim.color}14`,border:`1.5px solid ${dim.color}44`,padding:"0.5rem 0.55rem",minHeight:70}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"0.28rem"}}>
+                <div style={{fontSize:"0.58rem",fontWeight:"800",color:dim.color,lineHeight:1.1}}>{dim.label}</div>
+                <button onClick={()=>setEditing(isEditing?null:dim.id)} style={{padding:"1px 6px",borderRadius:20,background:"rgba(255,255,255,0.05)",border:`1px solid ${dim.color}44`,color:dim.color,fontSize:"0.38rem",fontWeight:"700",cursor:"pointer",flexShrink:0}}>
+                  {isEditing?"✓":"✏"}
+                </button>
+              </div>
+              {isEditing?(
+                <div style={{display:"flex",flexDirection:"column",gap:"0.2rem"}}>
+                  {[0,1,2].map(idx=>(
+                    <input key={idx} value={names[idx]||""} onChange={e=>update(dim.id,idx,e.target.value)}
+                      placeholder={idx===0?"Know personally":idx===1?"Mentor 2":"Mentor 3"}
+                      style={{background:"rgba(255,255,255,0.07)",border:`1px solid ${dim.color}55`,borderRadius:6,padding:"0.22rem 0.38rem",color:"white",fontSize:"0.52rem",outline:"none",width:"100%"}}/>
+                  ))}
+                </div>
+              ):(
+                <div style={{display:"flex",flexDirection:"column",gap:"0.18rem"}}>
+                  {hasAny
+                    ? names.filter(n=>n.trim()).map((n,i)=><div key={i} style={{fontSize:"0.55rem",color:"rgba(255,255,255,0.82)",fontWeight:"600",lineHeight:1.2}}>{n}</div>)
+                    : <div style={{fontSize:"0.46rem",color:"rgba(255,255,255,0.2)",fontStyle:"italic"}}>Tap ✏ to add</div>
+                  }
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ── Actions 3×6 — text only ───────────────────────────────────────────────────
+function ActionsGrid({actions, nra, onSetNRA, onDone, scores}){
+  const [expanded,setExpanded] = useState(false);
+  const [sortBy,setSortBy] = useState("score");
+  const active = useMemo(()=>{
+    const a=actions.filter(x=>x.status!=="done");
+    if(sortBy==="score") return [...a].sort((x,y)=>(scores[x.dim]||0)-(scores[y.dim]||0));
+    return a;
+  },[actions,scores,sortBy]);
+  const display = expanded ? active : active.slice(0,6);
+  const isNRA=(a)=>a.text===nra.text&&a.dim===nra.dim;
+  return(
+    <div>
+      <div style={{display:"flex",gap:"0.3rem",marginBottom:"0.4rem",alignItems:"center"}}>
+        <div style={{fontSize:"0.42rem",color:"rgba(255,255,255,0.25)",marginRight:"0.2rem"}}>Sort:</div>
+        {[["score","Low Score ↑"],["recent","Recent"]].map(([v,l])=>(
+          <button key={v} onClick={()=>setSortBy(v)} style={{padding:"2px 8px",borderRadius:20,background:sortBy===v?"rgba(239,159,39,0.2)":"rgba(255,255,255,0.04)",border:sortBy===v?"1px solid #EF9F27":"1px solid rgba(255,255,255,0.08)",color:sortBy===v?"#EF9F27":"rgba(255,255,255,0.35)",fontSize:"0.42rem",fontWeight:"700",cursor:"pointer"}}>{l}</button>
+        ))}
+        <div style={{fontSize:"0.4rem",color:"rgba(255,255,255,0.2)",marginLeft:"auto"}}>🔴 To Do · 🟡 Active · ✅ Done</div>
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:"0.4rem"}}>
+        {display.map(a=>{
+          const dim=DIMS.find(d=>d.id===a.dim)||DIMS[0];
+          const active_nra=isNRA(a);
+          return(
+            <div key={a.id} style={{borderRadius:10,background:active_nra?"rgba(239,159,39,0.12)":`${dim.color}12`,border:active_nra?"1.5px solid #EF9F27":`1px solid ${dim.color}36`,padding:"0.45rem 0.5rem",minHeight:58,display:"flex",flexDirection:"column",justifyContent:"space-between"}}>
+              <div style={{display:"flex",alignItems:"flex-start",gap:"4px",marginBottom:"3px"}}>
+                <StatusDot status={active_nra?"active_nra":a.status}/>
+                <div style={{fontSize:"0.56rem",fontWeight:"600",color:"rgba(255,255,255,0.88)",lineHeight:1.25,flex:1}}>{a.text}</div>
+              </div>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                <div style={{fontSize:"0.38rem",color:dim.color,fontWeight:"700",textTransform:"uppercase"}}>{dim.label}</div>
+                <div style={{display:"flex",gap:"3px"}}>
+                  {!active_nra&&<button onClick={()=>onSetNRA(a)} style={{padding:"1px 5px",borderRadius:5,background:"rgba(239,159,39,0.15)",border:"1px solid #EF9F2766",color:"#92400E",fontSize:"0.38rem",fontWeight:"800",cursor:"pointer"}}>SET</button>}
+                  <button onClick={()=>onDone(a.id)} style={{padding:"1px 5px",borderRadius:5,background:"rgba(34,197,94,0.1)",border:"1px solid rgba(34,197,94,0.3)",color:"#166534",fontSize:"0.38rem",fontWeight:"800",cursor:"pointer"}}>✓</button>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      {active.length>6&&<button onClick={()=>setExpanded(o=>!o)} style={{width:"100%",marginTop:"0.35rem",padding:"0.28rem",borderRadius:7,background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.07)",color:"rgba(255,255,255,0.35)",fontSize:"0.42rem",cursor:"pointer"}}>{expanded?"▲ Less":`▼ All ${active.length} actions`}</button>}
+    </div>
+  );
+}
+
+// ── HomeView (Compass) ────────────────────────────────────────────────────────
+function HomeView({compassData, onChange, nra, onNRADone, onSetNRA, actions, onActionDone, scores}){
+  const [mentors, setMentors] = useState(()=>load("hyl_mentors_v1", DEFAULT_MENTORS_BY_DIM));
+  useEffect(()=>save("hyl_mentors_v1", mentors),[mentors]);
+  const habits = DEFAULT_HABITS;
+
+  return(
+    <div style={{height:"100%",overflowY:"auto",padding:"0 1rem 2.5rem"}}>
+      <style>{`@keyframes slideDown{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}`}</style>
+
+      {/* Header */}
+      <div style={{paddingTop:"0.7rem",marginBottom:"0.75rem"}}>
+        <h1 style={{fontFamily:"'Cinzel',serif",fontSize:"1.55rem",fontWeight:"900",background:"linear-gradient(135deg,#f0ebff,#c4b5fd 50%,#67e8f9)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",letterSpacing:"0.04em",lineHeight:1,marginBottom:"0.35rem"}}>Honor Your Life</h1>
+        <p style={{fontSize:"0.6rem",color:"rgba(255,255,255,0.68)",fontFamily:"'Playfair Display',serif",lineHeight:1.7,marginBottom:"0.08rem"}}>
+          Create and Print <em>My Compass.</em> Take Action. Assess. Change Course. Repeat.
         </p>
-        <p style={{fontSize:"0.58rem",color:"rgba(255,255,255,0.38)",fontFamily:"'Playfair Display',serif",fontStyle:"italic",letterSpacing:"0.04em"}}>
+        <p style={{fontSize:"0.54rem",color:"rgba(255,255,255,0.32)",fontFamily:"'Playfair Display',serif",fontStyle:"italic"}}>
           This is how you Honor Your Life.
         </p>
       </div>
+
+      {/* Compass NRA — one line strip with expand */}
+      <CompassNRA nra={nra} onDone={onNRADone} onSetNRA={onSetNRA} actions={actions}/>
+
+      {/* Mission */}
       <EditBubble label="Mission" value={compassData.mission} onChange={v=>onChange("mission",v)} accent="rgba(167,139,250,0.85)" bg="linear-gradient(135deg,#1a1035,#0e0e20)"/>
-      <EditBubble label="Vision"  value={compassData.vision}  onChange={v=>onChange("vision",v)}  accent="rgba(103,232,249,0.8)"  bg="linear-gradient(135deg,#0a1a35,#060e20)"/>
+
+      {/* Vision */}
+      <EditBubble label="Vision" value={compassData.vision} onChange={v=>onChange("vision",v)} accent="rgba(103,232,249,0.8)" bg="linear-gradient(135deg,#0a1a35,#060e20)"/>
+
+      {/* Values */}
       <ValuesBubbles values={compassData.values} onChange={v=>onChange("values",v)}/>
-      <div style={{marginTop:"0.5rem",textAlign:"center",fontSize:"0.5rem",color:"rgba(255,255,255,0.14)",lineHeight:"1.9",fontStyle:"italic"}}>
+
+      {/* Goals */}
+      <SecLabel text="Goals"/>
+      <GoalsGrid/>
+
+      {/* Daily Actions */}
+      <SecLabel text="Daily Actions"/>
+      <DailyGrid habits={habits} nra={nra} onSetNRA={onSetNRA}/>
+
+      {/* Mentors */}
+      <SecLabel text="Mentors"/>
+      <MentorsGrid mentors={mentors} onChange={setMentors}/>
+
+      {/* Actions */}
+      <SecLabel text="Actions"/>
+      <ActionsGrid actions={actions} nra={nra} onSetNRA={onSetNRA} onDone={onActionDone} scores={scores}/>
+
+      <div style={{marginTop:"1.5rem",textAlign:"center",fontSize:"0.46rem",color:"rgba(255,255,255,0.1)",lineHeight:"1.9",fontStyle:"italic"}}>
         This app is a compass, not a destination. Put it down often.<br/>
         A little better than an hour ago is a massive win.
       </div>
     </div>
   );
 }
-
 // ── Life ──────────────────────────────────────────────────────────────────────
 function ScorePicker({score,onChange,color,onClose}){
   return(
@@ -661,14 +940,16 @@ function App(){
   return(
     <div style={{height:"100vh",display:"flex",flexDirection:"column",background:"#080810",overflow:"hidden"}}>
 
-      {/* ACTION BANNER — top, always visible */}
-      <div style={{padding:"0.5rem 0.75rem 0.4rem",background:"#080810",flexShrink:0}}>
-        <ActionBar nra={nra} onDone={markNraDone} actions={actions} onChoose={chooseAction}/>
-      </div>
+      {/* ACTION BANNER — only on Life and Search, not on Home/Compass */}
+      {view!=="home" && (
+        <div style={{padding:"0.5rem 0.75rem 0.4rem",background:"#080810",flexShrink:0}}>
+          <ActionBar nra={nra} onDone={markNraDone} actions={actions} onChoose={chooseAction}/>
+        </div>
+      )}
 
       {/* Main content */}
       <div style={{flex:1,overflow:"hidden",position:"relative"}}>
-        {view==="home"   && <HomeView   compassData={compass} onChange={updateCompass}/>}
+        {view==="home"   && <HomeView compassData={compass} onChange={updateCompass} nra={nra} onNRADone={markNraDone} onSetNRA={chooseAction} actions={actions} onActionDone={id=>setActions(a=>a.map(x=>x.id===id?{...x,status:"done"}:x))} scores={scores}/>}
         {view==="search" && <SearchView actions={actions} scores={scores}/>}
         {view==="life"   && <LifeView   scores={scores} onScore={setScore}/>}
       </div>
