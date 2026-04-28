@@ -84,35 +84,171 @@ function HomeIcon({active}){const c=active?"white":"rgba(255,255,255,0.4)";retur
 function SearchIconNav({active}){const c=active?"white":"rgba(255,255,255,0.4)";return <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke={c} strokeWidth="1.8"/><path d="M16.5 16.5L21 21" stroke={c} strokeWidth="1.8" strokeLinecap="round"/></svg>;}
 function LifeIcon({active}){const c=active?"white":"rgba(255,255,255,0.4)";return(<svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke={c} strokeWidth="1.8"/><circle cx="12" cy="12" r="5.5" stroke={c} strokeWidth="1" strokeDasharray="2 2"/>{Array.from({length:12},(_,i)=>{const a=(i/12)*Math.PI*2-Math.PI/2;return<line key={i} x1="12" y1="12" x2={(12+5.5*Math.cos(a)).toFixed(1)} y2={(12+5.5*Math.sin(a)).toFixed(1)} stroke={c} strokeWidth="0.8" strokeOpacity="0.6"/>;})} <circle cx="12" cy="12" r="1.5" fill={c}/></svg>);}
 
-// ── Action Bar ────────────────────────────────────────────────────────────────
-function ActionBar({nra,onDone,onExpand,expanded}){
-  const dim=DIMS.find(d=>d.id===nra.dim)||DIMS[0];
+// ── Status Dot ────────────────────────────────────────────────────────────────
+function StatusDot({status}){
+  // red = to do, amber = in progress/scheduled, green = done
+  if(status==="done") return(
+    <svg width="16" height="16" viewBox="0 0 16 16" style={{flexShrink:0}}>
+      <circle cx="8" cy="8" r="7" fill="#DCFCE7" stroke="#22C55E" strokeWidth="1.5"/>
+      <path d="M5 8 L7 10 L11 6" stroke="#22C55E" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+    </svg>
+  );
+  if(status==="scheduled"||status==="active_nra") return(
+    <svg width="16" height="16" viewBox="0 0 16 16" style={{flexShrink:0}}>
+      <circle cx="8" cy="8" r="7" fill="#FAEEDA" stroke="#EF9F27" strokeWidth="1.5"
+        strokeDasharray="3 2" strokeDashoffset="0"/>
+      <path d="M5 8 L7 10 L11 6" stroke="#EF9F27" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+    </svg>
+  );
+  // red — to do (empty circle)
   return(
-    <div style={{borderRadius:expanded?"16px 16px 0 0":16,overflow:"hidden",border:`1.5px solid ${dim.color}88`,boxShadow:`0 4px 24px ${dim.color}55`}}>
-      {/* Direction header */}
-      <div style={{background:`linear-gradient(135deg,${dim.color},${dim.color}cc)`,padding:"0.45rem 1rem 0.3rem",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-        <div style={{display:"flex",alignItems:"center",gap:"0.45rem"}}>
-          <span style={{fontSize:"1.1rem"}}>⏳</span>
-          <div>
-            <div style={{fontSize:"0.52rem",fontWeight:"900",color:"white",letterSpacing:"0.12em",textTransform:"uppercase",lineHeight:1}}>Your Next Right Action</div>
-            <div style={{fontSize:"0.44rem",color:"rgba(255,255,255,0.75)",marginTop:"2px",fontStyle:"italic"}}>Do the right thing. Get it done.</div>
+    <svg width="16" height="16" viewBox="0 0 16 16" style={{flexShrink:0}}>
+      <circle cx="8" cy="8" r="7" fill="#FEF2F2" stroke="#EF4444" strokeWidth="1.5"/>
+    </svg>
+  );
+}
+function CheckCircle({done,fading}){
+  const stroke = done||fading ? "#22C55E" : "#EF9F27";
+  const fill   = done||fading ? "#DCFCE7" : "#FAEEDA";
+  const check  = done||fading ? "#22C55E" : "#EF9F27";
+  return(
+    <svg width="52" height="52" viewBox="0 0 52 52" style={{display:"block",transition:"all 0.3s ease"}}>
+      <circle cx="26" cy="26" r="23" fill="white"/>
+      {/* Solid right half */}
+      <circle cx="26" cy="26" r="23" fill="none" stroke={stroke} strokeWidth="3.5"
+        strokeDasharray="72 72" strokeDashoffset="0"
+        transform="rotate(-90 26 26)"/>
+      {/* Dashed left half */}
+      <circle cx="26" cy="26" r="23" fill="none" stroke={stroke} strokeWidth="3.5"
+        strokeDasharray="5.5 5.5" strokeDashoffset="0"
+        transform="rotate(90 26 26)"/>
+      <circle cx="26" cy="26" r="17" fill={fill}/>
+      <path d="M17 26 L23 32 L35 19" stroke={check} strokeWidth="3.8"
+        strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+    </svg>
+  );
+}
+
+function ActionBar({nra,onDone,actions,onChoose}){
+  const dim = DIMS.find(d=>d.id===nra.dim)||DIMS[0];
+  const [done,    setDone]    = useState(false);
+  const [fading,  setFading]  = useState(false);
+  const [choosing,setChoosing]= useState(false);
+  const [typing,  setTyping]  = useState(false);
+  const [typed,   setTyped]   = useState("");
+  const inputRef = useRef(null);
+
+  // Reset animation state when nra changes
+  useEffect(()=>{ setDone(false); setFading(false); setChoosing(false); setTyping(false); },[nra]);
+  useEffect(()=>{ if(typing) setTimeout(()=>inputRef.current?.focus(),60); },[typing]);
+
+  const handleDone = () => {
+    setDone(true);
+    setTimeout(()=>setFading(true), 600);
+    setTimeout(()=>{ setDone(false); setFading(false); onDone(); }, 1400);
+  };
+
+  const handleTypedSubmit = () => {
+    if(typed.trim()){ onChoose({text:typed.trim(),dim:nra.dim}); setTyped(""); setTyping(false); }
+  };
+
+  const nextActions = actions.filter(a=>a.status==="active"&&(a.text!==nra.text||a.dim!==nra.dim)).slice(0,4);
+
+  return(
+    <div style={{position:"relative",marginTop:"6px",opacity:fading?0:1,transition:"opacity 0.5s ease"}}>
+      <div style={{
+        background:"white",
+        border:`2px solid ${done||fading?"#22C55E":"#EF9F27"}`,
+        borderRadius:14,
+        padding:"0.65rem 1rem 0.65rem 2.8rem",
+        boxShadow:`0 2px 16px ${done||fading?"rgba(34,197,94,0.25)":"rgba(239,159,39,0.2)"}`,
+        transition:"border-color 0.3s, box-shadow 0.3s",
+      }}>
+        {/* Label */}
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"0.22rem"}}>
+          <div style={{display:"flex",alignItems:"center",gap:"0.35rem"}}>
+            <span style={{fontSize:"0.9rem"}}>{dim.emoji}</span>
+            <div style={{fontSize:"0.5rem",fontWeight:"800",color:"#92400E",letterSpacing:"0.12em",textTransform:"uppercase"}}>Your Next Right Action</div>
           </div>
+          <div style={{fontSize:"0.44rem",color:"#92400E",fontStyle:"italic",fontWeight:"600"}}>{dim.label}</div>
         </div>
-        <button onClick={onExpand} style={{background:"rgba(0,0,0,0.2)",border:"1px solid rgba(255,255,255,0.25)",borderRadius:20,padding:"3px 9px",color:"white",fontSize:"0.44rem",fontWeight:"700",letterSpacing:"0.06em"}}>
-          {expanded?"▲ LESS":"▼ ALL"}
-        </button>
+
+        {/* Action text */}
+        {!typing && <div style={{fontSize:"0.88rem",fontWeight:"700",color:"#111",lineHeight:1.3,marginBottom:"0.35rem"}}>{nra.text}</div>}
+
+        {/* Type mode */}
+        {typing && (
+          <div style={{display:"flex",gap:"0.4rem",marginBottom:"0.35rem"}}>
+            <input ref={inputRef} value={typed} onChange={e=>setTyped(e.target.value)}
+              onKeyDown={e=>{ if(e.key==="Enter") handleTypedSubmit(); if(e.key==="Escape"){setTyping(false);setTyped("");} }}
+              placeholder="Type your next right action..."
+              style={{flex:1,background:"#FFFDF7",border:"1.5px solid #EF9F27",borderRadius:8,padding:"0.32rem 0.55rem",color:"#111",fontSize:"0.72rem",outline:"none"}}/>
+            <button onClick={handleTypedSubmit} style={{padding:"0.32rem 0.65rem",borderRadius:8,background:"#FAEEDA",border:"1.5px solid #EF9F27",color:"#412402",fontSize:"0.6rem",fontWeight:"800",cursor:"pointer"}}>→</button>
+            <button onClick={()=>{setTyping(false);setTyped("");}} style={{padding:"0.32rem 0.5rem",borderRadius:8,background:"white",border:"1px solid #d1d5db",color:"#6b7280",fontSize:"0.6rem",cursor:"pointer"}}>✕</button>
+          </div>
+        )}
+
+        {/* Choose from list */}
+        {choosing && (
+          <div style={{marginBottom:"0.35rem",display:"flex",flexDirection:"column",gap:"0.25rem",maxHeight:120,overflowY:"auto"}}>
+            <div style={{fontSize:"0.44rem",color:"#92400E",fontWeight:"700",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:"0.15rem"}}>Choose next right action:</div>
+            {nextActions.map(a=>{
+              const d=DIMS.find(x=>x.id===a.dim)||DIMS[0];
+              return(
+                <button key={a.id} onClick={()=>{onChoose(a);setChoosing(false);}}
+                  style={{textAlign:"left",padding:"0.3rem 0.5rem",borderRadius:8,background:"#FFFDF7",border:`1.5px solid ${d.color}55`,color:"#111",fontSize:"0.58rem",fontWeight:"600",cursor:"pointer",display:"flex",alignItems:"center",gap:"0.4rem"}}>
+                  <StatusDot status={a.status}/>
+                  <span style={{fontSize:"0.85rem",flexShrink:0}}>{d.emoji}</span>
+                  <span style={{flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{a.text}</span>
+                </button>
+              );
+            })}
+            {nextActions.length===0 && <div style={{fontSize:"0.52rem",color:"#92400E",fontStyle:"italic"}}>No other actions in backlog. Type one above.</div>}
+            <button onClick={()=>setChoosing(false)} style={{alignSelf:"flex-start",padding:"2px 8px",borderRadius:20,background:"white",border:"1px solid #d1d5db",color:"#6b7280",fontSize:"0.44rem",cursor:"pointer",marginTop:"0.1rem"}}>Cancel</button>
+          </div>
+        )}
+
+        {/* Bottom row: directive text with tappable links */}
+        {!typing && !choosing && (
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:"0.4rem"}}>
+            <div style={{fontSize:"0.52rem",color:"#92400E",fontWeight:"700",lineHeight:1.5}}>
+              Mark it{" "}
+              <span onClick={handleDone} style={{color:done?"#16A34A":"#D97706",fontWeight:"900",textDecoration:"underline",cursor:"pointer",transition:"color 0.3s"}}>
+                Done!
+              </span>
+              {" "}Today or{" "}
+              <span onClick={()=>scheduleGCal(nra.text,dim.label)} style={{color:"#D97706",fontWeight:"900",textDecoration:"underline",cursor:"pointer"}}>
+                Schedule it!
+              </span>
+            </div>
+            <div style={{display:"flex",gap:"0.3rem",flexShrink:0}}>
+              <button onClick={handleDone} style={{padding:"0.28rem 0.65rem",borderRadius:20,background:done?"#DCFCE7":"#FAEEDA",border:`1.5px solid ${done?"#22C55E":"#EF9F27"}`,color:done?"#166534":"#412402",fontSize:"0.52rem",fontWeight:"800",whiteSpace:"nowrap",cursor:"pointer",transition:"all 0.3s"}}>
+                {done?"✓ Done!":"✓"}
+              </button>
+              <button onClick={()=>scheduleGCal(nra.text,dim.label)} style={{padding:"0.28rem 0.5rem",borderRadius:20,background:"white",border:"1px solid #EF9F27",color:"#92400E",fontSize:"0.52rem",cursor:"pointer"}}>📅</button>
+            </div>
+          </div>
+        )}
+
+        {/* Three-option chooser row */}
+        {!typing && !choosing && (
+          <div style={{display:"flex",gap:"0.3rem",marginTop:"0.4rem",paddingTop:"0.35rem",borderTop:"1px solid #FCD34D44"}}>
+            <button onClick={()=>setTyping(true)} style={{flex:1,padding:"0.28rem 0.3rem",borderRadius:8,background:"#FFFDF7",border:"1px solid #EF9F2788",color:"#92400E",fontSize:"0.44rem",fontWeight:"700",cursor:"pointer",textAlign:"center"}}>
+              ✏ Type Action
+            </button>
+            <button onClick={()=>onChoose(nra)} style={{flex:1,padding:"0.28rem 0.3rem",borderRadius:8,background:"#FAEEDA",border:"1.5px solid #EF9F27",color:"#412402",fontSize:"0.44rem",fontWeight:"800",cursor:"pointer",textAlign:"center"}}>
+              ✓ Accept This
+            </button>
+            <button onClick={()=>setChoosing(true)} style={{flex:1,padding:"0.28rem 0.3rem",borderRadius:8,background:"#FFFDF7",border:"1px solid #EF9F2788",color:"#92400E",fontSize:"0.44rem",fontWeight:"700",cursor:"pointer",textAlign:"center"}}>
+              ☰ Choose
+            </button>
+          </div>
+        )}
       </div>
-      {/* Action text + buttons */}
-      <div style={{background:`linear-gradient(135deg,${dim.color}22,${dim.color}10)`,backdropFilter:"blur(8px)",padding:"0.55rem 1rem",display:"flex",alignItems:"center",gap:"0.65rem"}}>
-        <span style={{fontSize:"1.4rem",flexShrink:0}}>{dim.emoji}</span>
-        <div style={{flex:1,minWidth:0}}>
-          <div style={{fontSize:"0.85rem",fontWeight:"700",color:"white",lineHeight:1.3}}>{nra.text}</div>
-          <div style={{fontSize:"0.44rem",color:dim.color,marginTop:"2px",fontWeight:"700",textTransform:"uppercase",letterSpacing:"0.08em"}}>{dim.label} · {dim.sub}</div>
-        </div>
-        <div style={{display:"flex",flexDirection:"column",gap:"0.3rem",flexShrink:0}} onClick={e=>e.stopPropagation()}>
-          <button onClick={onDone} style={{padding:"0.38rem 0.9rem",borderRadius:20,background:"rgba(34,197,94,0.35)",border:"1.5px solid rgba(34,197,94,0.7)",color:"#4ADE80",fontSize:"0.6rem",fontWeight:"900",letterSpacing:"0.08em",textTransform:"uppercase",whiteSpace:"nowrap"}}>✓ Mark Done</button>
-          <button onClick={()=>scheduleGCal(nra.text,dim.label)} style={{padding:"0.3rem 0.9rem",borderRadius:20,background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.2)",color:"rgba(255,255,255,0.7)",fontSize:"0.55rem",fontWeight:"600",whiteSpace:"nowrap"}}>📅 Schedule</button>
-        </div>
+
+      {/* Check circle — top-LEFT, overlapping corner */}
+      <div style={{position:"absolute",top:-8,left:-8,zIndex:10,pointerEvents:"none"}}>
+        <CheckCircle done={done} fading={fading}/>
       </div>
     </div>
   );
@@ -130,42 +266,42 @@ function ActionExpanded({actions,scores,onSetNRA,onDone,onAdd}){
   },[actions,scores,sortBy]);
   const handleAdd=()=>{if(newText.trim()){onAdd(newText.trim());setNewText("");setShowAdd(false);}};
   return(
-    <div style={{background:"#0F0F1A",border:"1px solid rgba(255,255,255,0.08)",borderTop:"none",borderRadius:"0 0 16px 16px",padding:"0.7rem 0.75rem",maxHeight:320,overflowY:"auto",animation:"slideDown 0.2s ease"}}>
-      <div style={{fontSize:"0.5rem",color:"rgba(255,255,255,0.28)",fontStyle:"italic",textAlign:"center",marginBottom:"0.55rem",lineHeight:1.6}}>
-        Read your Mission. What is your next right action?<br/>Say it out loud before you add it.
+    <div style={{background:"#FFFDF7",border:"2px solid #EF9F27",borderTop:"none",borderRadius:"0 0 14px 14px",padding:"0.65rem 0.75rem",maxHeight:300,overflowY:"auto"}}>
+      <div style={{fontSize:"0.5rem",color:"#854F0B",fontStyle:"italic",textAlign:"center",marginBottom:"0.5rem",lineHeight:1.6}}>
+        Read your Mission. Say your next right action out loud before you add it.
       </div>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"0.45rem"}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"0.42rem"}}>
         <div style={{display:"flex",gap:"0.25rem"}}>
           {[["score","Low Score ↑"],["dim","By Dim"],["recent","Recent"]].map(([v,l])=>(
-            <button key={v} onClick={()=>setSortBy(v)} style={{padding:"2px 7px",borderRadius:20,background:sortBy===v?"rgba(167,139,250,0.25)":"rgba(255,255,255,0.05)",border:sortBy===v?"1px solid rgba(167,139,250,0.5)":"1px solid rgba(255,255,255,0.07)",color:sortBy===v?"#c4b5fd":"rgba(255,255,255,0.3)",fontSize:"0.4rem",fontWeight:"700"}}>
+            <button key={v} onClick={()=>setSortBy(v)} style={{padding:"2px 7px",borderRadius:20,background:sortBy===v?"#FAEEDA":"white",border:sortBy===v?"1.5px solid #EF9F27":"1px solid #EF9F2766",color:sortBy===v?"#412402":"#854F0B",fontSize:"0.4rem",fontWeight:"800",cursor:"pointer"}}>
               {l}
             </button>
           ))}
         </div>
-        <button onClick={()=>setShowAdd(o=>!o)} style={{padding:"2px 8px",borderRadius:20,background:"rgba(124,58,237,0.25)",border:"1px solid rgba(124,58,237,0.5)",color:"#a78bfa",fontSize:"0.4rem",fontWeight:"800",letterSpacing:"0.06em"}}>
-          {showAdd?"✕":"+ ADD"}
+        <button onClick={()=>setShowAdd(o=>!o)} style={{padding:"2px 8px",borderRadius:20,background:"#FAEEDA",border:"1.5px solid #EF9F27",color:"#412402",fontSize:"0.4rem",fontWeight:"800",cursor:"pointer"}}>
+          {showAdd?"✕ Cancel":"+ Add"}
         </button>
       </div>
       {showAdd&&(
-        <div style={{display:"flex",gap:"0.4rem",marginBottom:"0.45rem"}}>
-          <input value={newText} onChange={e=>setNewText(e.target.value)} onKeyDown={e=>e.key==="Enter"&&handleAdd()} placeholder="What is your next right action?" style={{flex:1,background:"rgba(255,255,255,0.07)",border:"1px solid rgba(255,255,255,0.14)",borderRadius:8,padding:"0.32rem 0.5rem",color:"white",fontSize:"0.6rem",outline:"none"}}/>
-          <button onClick={handleAdd} style={{padding:"0.32rem 0.7rem",borderRadius:8,background:"rgba(124,58,237,0.4)",border:"1px solid rgba(124,58,237,0.6)",color:"white",fontSize:"0.58rem",fontWeight:"700"}}>Add</button>
+        <div style={{display:"flex",gap:"0.4rem",marginBottom:"0.42rem"}}>
+          <input value={newText} onChange={e=>setNewText(e.target.value)} onKeyDown={e=>e.key==="Enter"&&handleAdd()} placeholder="What is your next right action?" style={{flex:1,background:"white",border:"1.5px solid #EF9F27",borderRadius:8,padding:"0.32rem 0.5rem",color:"#1a1a1a",fontSize:"0.6rem",outline:"none"}}/>
+          <button onClick={handleAdd} style={{padding:"0.32rem 0.7rem",borderRadius:8,background:"#FAEEDA",border:"1.5px solid #EF9F27",color:"#412402",fontSize:"0.58rem",fontWeight:"800",cursor:"pointer"}}>Add</button>
         </div>
       )}
       <div style={{display:"flex",flexDirection:"column",gap:"0.28rem"}}>
         {sorted.map(action=>{
           const dim=DIMS.find(d=>d.id===action.dim)||DIMS[0];
           return(
-            <div key={action.id} style={{display:"flex",alignItems:"center",gap:"0.45rem",padding:"0.38rem 0.5rem",borderRadius:10,background:`${dim.color}14`,border:`1px solid ${dim.color}28`}}>
+            <div key={action.id} style={{display:"flex",alignItems:"center",gap:"0.45rem",padding:"0.38rem 0.5rem",borderRadius:10,background:"white",border:`1.5px solid ${dim.color}44`}}>
               <span style={{fontSize:"0.85rem",flexShrink:0}}>{dim.emoji}</span>
               <div style={{flex:1,minWidth:0}}>
-                <div style={{fontSize:"0.56rem",color:"rgba(255,255,255,0.8)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{action.text}</div>
+                <div style={{fontSize:"0.56rem",color:"#1a1a1a",fontWeight:"600",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{action.text}</div>
                 <div style={{fontSize:"0.38rem",color:dim.color,marginTop:"1px",fontWeight:"700"}}>{dim.label}{action.status==="scheduled"?" · SCHEDULED":""}</div>
               </div>
               <div style={{display:"flex",gap:"0.22rem",flexShrink:0}}>
-                <button onClick={()=>onSetNRA(action)} style={{padding:"2px 6px",borderRadius:6,background:"rgba(167,139,250,0.2)",border:"1px solid rgba(167,139,250,0.4)",color:"#c4b5fd",fontSize:"0.4rem",fontWeight:"700"}}>SET</button>
-                <button onClick={()=>onDone(action.id)} style={{padding:"2px 6px",borderRadius:6,background:"rgba(34,197,94,0.15)",border:"1px solid rgba(34,197,94,0.35)",color:"#4ADE80",fontSize:"0.4rem",fontWeight:"700"}}>✓</button>
-                <button onClick={()=>scheduleGCal(action.text,dim.label)} style={{padding:"2px 4px",borderRadius:6,background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.1)",color:"rgba(255,255,255,0.4)",fontSize:"0.55rem"}}>📅</button>
+                <button onClick={()=>onSetNRA(action)} style={{padding:"2px 6px",borderRadius:6,background:"#FAEEDA",border:"1.5px solid #EF9F27",color:"#412402",fontSize:"0.4rem",fontWeight:"800",cursor:"pointer"}}>SET</button>
+                <button onClick={()=>onDone(action.id)} style={{padding:"2px 6px",borderRadius:6,background:"rgba(34,197,94,0.12)",border:"1px solid rgba(34,197,94,0.4)",color:"#166534",fontSize:"0.4rem",fontWeight:"800",cursor:"pointer"}}>✓</button>
+                <button onClick={()=>scheduleGCal(action.text,dim.label)} style={{padding:"2px 5px",borderRadius:6,background:"white",border:"1px solid #EF9F2766",color:"#854F0B",fontSize:"0.55rem",cursor:"pointer"}}>📅</button>
               </div>
             </div>
           );
@@ -319,8 +455,14 @@ function HomeView({compassData,onChange}){
   return(
     <div style={{height:"100%",overflowY:"auto",padding:"0 1rem 1rem"}}>
       <div style={{paddingTop:"0.7rem",marginBottom:"0.8rem"}}>
-        <h1 style={{fontFamily:"'Cinzel',serif",fontSize:"1.65rem",fontWeight:"900",background:"linear-gradient(135deg,#f0ebff,#c4b5fd 50%,#67e8f9)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",letterSpacing:"0.04em",lineHeight:1,marginBottom:"0.3rem"}}>Honor Your Life</h1>
-        <p style={{fontSize:"0.72rem",color:"rgba(255,255,255,0.6)",letterSpacing:"0.08em",fontStyle:"italic",fontFamily:"'Playfair Display',serif"}}>Right Seeing. Right Action.</p>
+        <h1 style={{fontFamily:"'Cinzel',serif",fontSize:"1.65rem",fontWeight:"900",background:"linear-gradient(135deg,#f0ebff,#c4b5fd 50%,#67e8f9)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",letterSpacing:"0.04em",lineHeight:1,marginBottom:"0.45rem"}}>Honor Your Life</h1>
+        <p style={{fontSize:"0.62rem",color:"rgba(255,255,255,0.72)",fontFamily:"'Playfair Display',serif",lineHeight:1.7,marginBottom:"0.1rem"}}>
+          Create and Print <span style={{fontStyle:"italic"}}>My Compass.</span> Take Action.{" "}
+          Assess. Change Course. Repeat.
+        </p>
+        <p style={{fontSize:"0.58rem",color:"rgba(255,255,255,0.38)",fontFamily:"'Playfair Display',serif",fontStyle:"italic",letterSpacing:"0.04em"}}>
+          This is how you Honor Your Life.
+        </p>
       </div>
       <EditBubble label="Mission" value={compassData.mission} onChange={v=>onChange("mission",v)} accent="rgba(167,139,250,0.85)" bg="linear-gradient(135deg,#1a1035,#0e0e20)"/>
       <EditBubble label="Vision"  value={compassData.vision}  onChange={v=>onChange("vision",v)}  accent="rgba(103,232,249,0.8)"  bg="linear-gradient(135deg,#0a1a35,#060e20)"/>
@@ -499,7 +641,6 @@ function App(){
   const [nra,      setNra]      = useState(()=>load(STORAGE_ACTION,{text:"Call someone. Not text. Call.",dim:5}));
   const [actions,  setActions]  = useState(()=>load(STORAGE_ACTIONS,DEFAULT_ACTIONS_LIST));
   const [view,     setView]     = useState("home");
-  const [barOpen,  setBarOpen]  = useState(false);
   const [showAdd,  setShowAdd]  = useState(false);
 
   useEffect(()=>save(STORAGE_SCORES,scores),[scores]);
@@ -509,33 +650,30 @@ function App(){
 
   const setScore=(id,val)=>setScores(s=>({...s,[id]:val}));
   const updateCompass=(field,val)=>setCompass(d=>({...d,[field]:val}));
-  const markDone=(id)=>setActions(a=>a.map(x=>x.id===id?{...x,status:"done"}:x));
-  const setNraFromAction=(action)=>{ setNra({text:action.text,dim:action.dim}); setBarOpen(false); };
   const markNraDone=()=>{
     setActions(a=>a.map(x=>(x.text===nra.text&&x.dim===nra.dim)?{...x,status:"done"}:x));
     const next=actions.find(a=>a.status==="active"&&(a.text!==nra.text||a.dim!==nra.dim));
     if(next) setNra({text:next.text,dim:next.dim});
-    setBarOpen(false);
   };
+  const chooseAction=(action)=>{ setNra({text:action.text,dim:action.dim}); };
   const addAction=(text,dim)=>{ const a={id:Date.now(),text,dim,status:"active"}; setActions(prev=>[a,...prev]); setNra({text,dim}); };
 
   return(
     <div style={{height:"100vh",display:"flex",flexDirection:"column",background:"#080810",overflow:"hidden"}}>
 
-      {/* ACTION BANNER — top, always visible, urgent */}
-      <div style={{padding:"0.6rem 0.75rem 0",background:"#080810",flexShrink:0}}>
-        <ActionBar nra={nra} onDone={markNraDone} onExpand={()=>setBarOpen(o=>!o)} expanded={barOpen}/>
-        {barOpen&&<ActionExpanded actions={actions} scores={scores} onSetNRA={setNraFromAction} onDone={markDone} onAdd={addAction}/>}
+      {/* ACTION BANNER — top, always visible */}
+      <div style={{padding:"0.5rem 0.75rem 0.4rem",background:"#080810",flexShrink:0}}>
+        <ActionBar nra={nra} onDone={markNraDone} actions={actions} onChoose={chooseAction}/>
       </div>
 
-      {/* Main content scrolls below banner */}
+      {/* Main content */}
       <div style={{flex:1,overflow:"hidden",position:"relative"}}>
         {view==="home"   && <HomeView   compassData={compass} onChange={updateCompass}/>}
         {view==="search" && <SearchView actions={actions} scores={scores}/>}
         {view==="life"   && <LifeView   scores={scores} onScore={setScore}/>}
       </div>
 
-      <BottomNav view={view} setView={v=>{setView(v);setBarOpen(false);}} onPlus={()=>setShowAdd(true)}/>
+      <BottomNav view={view} setView={v=>setView(v)} onPlus={()=>setShowAdd(true)}/>
       {showAdd&&<QuickAdd onAdd={addAction} onClose={()=>setShowAdd(false)}/>}
     </div>
   );
